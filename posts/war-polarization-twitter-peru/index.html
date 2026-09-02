@@ -8,241 +8,477 @@
   <meta property="og:title" content="Análisis y clasificación de tweets de usuarios peruanos sobre la guerra entre Rusia y Ucrania">
   <meta property="og:description" content="Recolección, exploración, etiquetado y clasificación de 26 000 tweets de usuarios peruanos sobre la invasión rusa de Ucrania (2022).">
   <meta property="og:type" content="article">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    body { max-width: 44rem; margin: 3rem auto; padding: 0 1.25rem; font: 18px/1.65 Georgia, "Times New Roman", serif; color: #222; background: #fff; }
-    a { color: #0645ad; }
-    nav { margin-bottom: 2rem; font-size: 0.9rem; }
-    h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 0.75rem; }
-    h2 { font-size: 1.45rem; margin-top: 3rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
-    h3 { font-size: 1.15rem; margin-top: 2rem; }
-    .meta { color: #666; font-size: 0.9rem; margin: 0 0 1.5rem; }
-    .course { background: #f7f4ee; border-left: 4px solid #8b3a3a; padding: 0.75rem 1rem; margin: 1.5rem 0; font-size: 0.95rem; }
-    .course p { margin: 0.15rem 0; }
-    .toc { font-size: 0.95rem; background: #fafafa; border: 1px solid #e5e5e5; padding: 0.75rem 1.25rem; }
-    .toc ol { margin: 0.25rem 0; padding-left: 1.25rem; }
-    figure { margin: 2rem 0; }
-    figure img { display: block; margin: 0 auto; max-width: 100%; height: auto; }
-    figcaption { font-size: 0.85rem; color: #666; text-align: center; margin-top: 0.5rem; }
-    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: stretch; }
-    .two figure { margin: 0; display: flex; flex-direction: column; justify-content: flex-end; }
-    .two figure img { margin-top: auto; }
-    @media (max-width: 640px) { .two { grid-template-columns: 1fr; } body { font-size: 17px; } }
-    table { border-collapse: collapse; width: 100%; font-size: 0.92rem; margin: 1.25rem 0; }
-    th, td { border-bottom: 1px solid #ddd; padding: 0.4rem 0.6rem; text-align: left; vertical-align: top; }
-    th { background: #f4f4f4; }
-    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-    pre { background: #f4f4f4; padding: 0.9rem 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.45; }
-    code { font-family: Menlo, Consolas, monospace; font-size: 0.9em; }
-    blockquote { margin: 1rem 0; padding: 0.25rem 1rem; border-left: 3px solid #ccc; color: #444; font-style: italic; }
-    .note { background: #fff8e1; border: 1px solid #f0e0a0; padding: 0.75rem 1rem; font-size: 0.92rem; }
-    ul, ol { padding-left: 1.4rem; }
-    li { margin: 0.25rem 0; }
-    .refs li { font-size: 0.9rem; margin: 0.5rem 0; word-break: break-word; }
+    :root {
+      --paper: #f5f2ea;
+      --paper-2: #ebe6d9;
+      --surface: #fbf9f4;
+      --ink: #1c1b18;
+      --ink-2: #4f4b43;
+      --ink-3: #7c776c;
+      --rule: #d9d3c5;
+      --ru: oklch(52% 0.17 24);
+      --ru-soft: oklch(89% 0.05 24);
+      --ru-text: oklch(40% 0.15 24);
+      --ua: oklch(52% 0.17 262);
+      --ua-soft: oklch(89% 0.05 262);
+      --ua-text: oklch(40% 0.15 262);
+      --n: oklch(64% 0.012 85);
+      --n-soft: oklch(91% 0.01 85);
+      --display: "Instrument Serif", Georgia, "Times New Roman", serif;
+      --sans: "IBM Plex Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --mono: "IBM Plex Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.62 var(--sans); -webkit-font-smoothing: antialiased; }
+    a { color: var(--ua-text); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { color: var(--ua); }
+    img { max-width: 100%; height: auto; }
+    .mono { font-family: var(--mono); }
+
+    /* Top bar */
+    .topbar { position: sticky; top: 0; z-index: 20; background: color-mix(in oklab, var(--paper) 82%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--rule); }
+    .topbar__inner { max-width: 1160px; margin: 0 auto; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+    .topbar a { color: var(--ink); text-decoration: none; }
+    .topbar a:hover { color: var(--ru); }
+
+    /* Hero */
+    .hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--rule);
+      background:
+        radial-gradient(70% 90% at 6% 18%, oklch(52% 0.17 24 / 0.13), transparent 62%),
+        radial-gradient(70% 90% at 94% 26%, oklch(52% 0.17 262 / 0.15), transparent 62%),
+        var(--paper); }
+    .hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.07; mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+    .hero__inner { position: relative; z-index: 1; max-width: 1160px; margin: 0 auto; padding: 72px 24px 56px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 48px 64px; align-items: start; }
+    .kicker { margin: 0 0 22px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 8px 14px; }
+    .kicker span::before { content: "·"; margin-right: 14px; color: var(--ink-3); }
+    .kicker span:first-child::before { content: none; }
+    .hero h1 { margin: 0 0 22px; font-family: var(--display); font-weight: 400; font-size: clamp(38px, 5vw, 66px); line-height: 1.02; letter-spacing: -0.012em; text-wrap: balance; }
+    .hero h1 em { font-style: italic; color: var(--ru-text); }
+    .hero h1 em.ua { color: var(--ua-text); }
+    .dek { margin: 0 0 26px; font-size: 20px; line-height: 1.5; color: var(--ink-2); max-width: 58ch; text-wrap: pretty; }
+    .byline { margin: 0; font-family: var(--mono); font-size: 13px; line-height: 1.7; color: var(--ink-2); }
+    .byline strong { font-weight: 500; color: var(--ink); }
+
+    .ficha { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 20px 22px; box-shadow: 0 1px 0 rgba(28,27,24,0.04), 0 12px 32px -20px rgba(28,27,24,0.35); }
+    .ficha dl { margin: 0; display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .ficha dt { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 2px; }
+    .ficha dd { margin: 0; font-size: 15px; line-height: 1.45; }
+
+    .spectrum { grid-column: 1 / -1; margin-top: 8px; padding-top: 28px; border-top: 1px solid var(--rule); }
+    .spectrum__head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+    .spectrum__title { margin: 0; font-family: var(--display); font-size: 26px; line-height: 1.15; }
+    .spectrum__sub { margin: 0; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+    .bar { display: flex; gap: 3px; height: 56px; border-radius: 8px; overflow: hidden; }
+    .seg { position: relative; display: flex; align-items: center; justify-content: center; min-width: 4px; transform-origin: left center; animation: grow 1s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+    .seg span { font-family: var(--mono); font-size: 13px; white-space: nowrap; overflow: hidden; }
+    .seg--rp { flex: 80 1 0; background: var(--ru); color: #fff; animation-delay: 0.05s; }
+    .seg--um { flex: 61 1 0; background: var(--ru-soft); color: var(--ru-text); animation-delay: 0.15s; }
+    .seg--n  { flex: 705 1 0; background: var(--n-soft); color: var(--ink-2); animation-delay: 0.25s; }
+    .seg--rm { flex: 130 1 0; background: var(--ua-soft); color: var(--ua-text); animation-delay: 0.35s; }
+    .seg--up { flex: 24 1 0; background: var(--ua); color: #fff; animation-delay: 0.45s; }
+    @keyframes grow { from { transform: scaleX(0); opacity: 0; } to { transform: scaleX(1); opacity: 1; } }
+    .legend { display: flex; flex-wrap: wrap; gap: 10px 26px; margin: 14px 0 0; padding: 0; list-style: none; font-size: 14px; }
+    .legend li { display: flex; align-items: baseline; gap: 8px; }
+    .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; transform: translateY(1px); }
+    .legend .pct { font-family: var(--mono); color: var(--ink-3); font-size: 13px; }
+    .i-rp { background: var(--ru); } .i-um { background: var(--ru-soft); border: 1px solid oklch(52% 0.17 24 / 0.4); } .i-n { background: var(--n-soft); border: 1px solid var(--n); } .i-rm { background: var(--ua-soft); border: 1px solid oklch(52% 0.17 262 / 0.4); } .i-up { background: var(--ua); }
+    @media (prefers-reduced-motion: reduce) { .seg { animation: none; } html { scroll-behavior: auto; } }
+
+    /* Layout */
+    .layout { max-width: 1160px; margin: 0 auto; padding: 56px 24px 96px; display: grid; grid-template-columns: 228px minmax(0, 780px); gap: 72px; justify-content: space-between; }
+    .rail { position: sticky; top: 76px; align-self: start; }
+    .toc { font-size: 14px; }
+    .toc__label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 12px; }
+    .toc ol { list-style: none; margin: 0; padding: 0; }
+    .toc ol ol { margin: 6px 0 6px 30px; }
+    .toc li { margin: 0; }
+    .toc a { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 5px 0; color: var(--ink-2); text-decoration: none; line-height: 1.35; border-bottom: 1px solid transparent; }
+    .toc ol ol a { grid-template-columns: 26px 1fr; font-size: 13.5px; color: var(--ink-3); }
+    .toc a:hover { color: var(--ink); }
+    .toc .n { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); padding-top: 3px; }
+    .rail__meta { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--rule); font-family: var(--mono); font-size: 12px; line-height: 1.7; color: var(--ink-3); }
+
+    /* Prose */
+    .prose > p, .prose > ul, .prose > ol, .prose li { text-wrap: pretty; }
+    .prose > p, .prose > ul, .prose > ol { max-width: 66ch; }
+    .prose > p { margin: 0 0 20px; }
+    .prose .lede { font-size: 19px; line-height: 1.6; }
+    .prose .lede::first-letter { font-family: var(--display); font-size: 74px; line-height: 0.78; float: left; margin: 8px 10px 0 0; color: var(--ru); }
+    .prose h2 { margin: 80px 0 22px; padding-top: 22px; border-top: 2px solid var(--ink); font-family: var(--display); font-weight: 400; font-size: 42px; line-height: 1.06; letter-spacing: -0.01em; display: grid; grid-template-columns: 64px 1fr; align-items: baseline; }
+    .prose h2:first-of-type { margin-top: 0; }
+    .prose h2 .num, .prose h3 .num { font-family: var(--mono); font-size: 13px; letter-spacing: 0.1em; color: var(--ink-3); }
+    .prose h3 { margin: 52px 0 14px; font-family: var(--display); font-weight: 400; font-size: 29px; line-height: 1.15; display: grid; grid-template-columns: 64px 1fr; align-items: baseline; }
+    .prose h4 { margin: 0 0 8px; font-family: var(--display); font-weight: 400; font-size: 24px; line-height: 1.2; }
+    .prose strong { font-weight: 600; }
+    .prose ul, .prose ol { padding-left: 1.3rem; margin: 0 0 20px; }
+    .prose li { margin: 6px 0; }
+    .prose li::marker { color: var(--ink-3); }
+    code { font-family: var(--mono); font-size: 0.9em; }
+    :not(pre) > code { background: var(--paper-2); padding: 1px 6px; border-radius: 4px; color: var(--ink); }
+    pre { margin: 22px 0 26px; background: var(--ink); color: #ebe6d9; padding: 18px 20px; border-radius: 10px; overflow-x: auto; font: 13px/1.6 var(--mono); }
+    pre code { font-size: inherit; }
+
+    /* Tables */
+    .table { margin: 22px 0 28px; overflow-x: auto; border-top: 2px solid var(--ink); }
+    table { border-collapse: collapse; width: 100%; font-size: 15px; line-height: 1.5; }
+    th { text-align: left; font-family: var(--mono); font-weight: 500; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); padding: 12px 12px 10px 0; border-bottom: 1px solid var(--rule); vertical-align: bottom; }
+    td { padding: 12px 12px 12px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+    td:last-child, th:last-child { padding-right: 0; }
+    td.num, th.num { text-align: right; font-family: var(--mono); font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    th.num { font-size: 11px; }
+    td.total { font-weight: 600; }
+    .barcell { width: 34%; min-width: 140px; }
+    .barcell i { display: block; height: 14px; border-radius: 3px; margin-top: 5px; }
+
+    /* Stance chips */
+    .chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12px; line-height: 1; padding: 5px 9px; border-radius: 999px; white-space: nowrap; vertical-align: middle; }
+    .chip--rp { background: var(--ru); color: #fff; }
+    .chip--um { background: var(--ru-soft); color: var(--ru-text); }
+    .chip--n  { background: var(--n-soft); color: var(--ink-2); }
+    .chip--rm { background: var(--ua-soft); color: var(--ua-text); }
+    .chip--up { background: var(--ua); color: #fff; }
+
+    /* Tweet cards */
+    .tweets { display: grid; gap: 14px; margin: 22px 0 26px; }
+    .tweet { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 18px 20px 20px; display: grid; gap: 12px; }
+    .tweet__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .tweet__id { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+    .tweet p { margin: 0; font-family: var(--display); font-size: 21px; line-height: 1.32; text-wrap: pretty; }
+
+    /* Figures */
+    figure { margin: 26px 0 30px; }
+    .frame { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px; display: flex; justify-content: center; align-items: center; }
+    figure img { display: block; }
+    figcaption { margin-top: 10px; font-size: 13.5px; line-height: 1.5; color: var(--ink-3); }
+    figcaption .chip { margin-right: 6px; transform: translateY(-1px); }
+    .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 26px 0 30px; }
+    .two figure { margin: 0; display: flex; flex-direction: column; }
+    .two .frame { flex: 1; }
+
+    /* Readings */
+    .readings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 26px 0 30px; }
+    .reading { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 20px 20px 22px; display: flex; flex-direction: column; gap: 12px; }
+    .reading h4 { margin: 0; }
+    .reading p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--ink-2); }
+
+    /* Findings */
+    .findings { list-style: none; margin: 26px 0 30px; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--rule); }
+    .findings li { display: grid; grid-template-columns: 64px 1fr; gap: 12px; padding: 18px 0; margin: 0; border-bottom: 1px solid var(--rule); font-family: var(--display); font-size: 23px; line-height: 1.3; }
+    .findings .n { font-family: var(--mono); font-size: 13px; color: var(--ru); padding-top: 8px; }
+
+    .limits li { margin: 12px 0; }
+
+    .note { margin: 34px 0; background: var(--paper-2); border: 1px solid var(--rule); border-radius: 14px; padding: 20px 22px; font-size: 15.5px; line-height: 1.6; }
+    .note .tag { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 8px; }
+    .note p { margin: 0; }
+
+    .refs { list-style: none; padding: 0; margin: 22px 0 0; counter-reset: ref; }
+    .refs li { display: grid; grid-template-columns: 40px 1fr; gap: 12px; margin: 0; padding: 12px 0; border-bottom: 1px solid var(--rule); font-size: 14px; line-height: 1.55; color: var(--ink-2); word-break: break-word; }
+    .refs li::before { counter-increment: ref; content: "[" counter(ref) "]"; font-family: var(--mono); font-size: 12px; color: var(--ink-3); padding-top: 3px; }
+    .refs a { color: var(--ua-text); }
+
+    footer { border-top: 1px solid var(--rule); }
+    footer .inner { max-width: 1160px; margin: 0 auto; padding: 28px 24px 40px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+    footer a { color: var(--ink); text-decoration: none; }
+    footer a:hover { color: var(--ru); }
+
+    @media (max-width: 1040px) {
+      .layout { grid-template-columns: minmax(0, 1fr); gap: 40px; justify-content: start; }
+      .rail { position: static; }
+      .toc { columns: 2; column-gap: 40px; }
+      .toc ol ol { break-inside: avoid; }
+      .rail__meta { display: none; }
+    }
+    @media (max-width: 760px) {
+      body { font-size: 16.5px; }
+      .hero__inner { grid-template-columns: minmax(0, 1fr); padding: 48px 20px 40px; gap: 32px; }
+      .hero h1 { font-size: clamp(34px, 9.5vw, 46px); }
+      .dek { font-size: 18px; }
+      .layout { padding: 40px 20px 72px; }
+      .toc { columns: 1; }
+      .prose h2 { font-size: 34px; grid-template-columns: 48px 1fr; margin-top: 56px; }
+      .prose h3 { font-size: 25px; grid-template-columns: 48px 1fr; }
+      .prose .lede::first-letter { font-size: 60px; }
+      .two, .readings { grid-template-columns: 1fr; }
+      .bar { height: 44px; }
+      .seg span { display: none; }
+      .findings li { grid-template-columns: 44px 1fr; font-size: 20px; }
+      .refs li { grid-template-columns: 32px 1fr; }
+      .topbar__inner span { display: none; }
+    }
   </style>
 </head>
 <body>
-  <nav><a href="/">← mgonnav</a></nav>
+  <nav class="topbar" aria-label="Sitio">
+    <div class="topbar__inner">
+      <a href="/">← mgonnav</a>
+      <span>Ciencia de datos · Twitter · Perú · 2022</span>
+    </div>
+  </nav>
 
   <article>
-    <header>
-      <h1>Análisis y clasificación de tweets de usuarios peruanos sobre su posición respecto a la guerra entre Rusia y Ucrania</h1>
-      <p class="meta">Mateo Gonzales Navarrete · Universidad Católica San Pablo<br>
-        Publicado el <time datetime="2026-09-02">2 de septiembre de 2026</time>. Trabajo realizado durante el semestre 2022-1.</p>
+    <header class="hero">
+      <div class="hero__inner">
+        <div>
+          <p class="kicker"><span>Trabajo final</span><span>CS351</span><span>Semestre 2022-1</span></p>
+          <h1>Análisis y clasificación de tweets de usuarios peruanos sobre su posición respecto a la guerra entre <em>Rusia</em> y <em class="ua">Ucrania</em></h1>
+          <p class="dek">Recolección, exploración, etiquetado y clasificación de 26 000 tweets de usuarios peruanos sobre la invasión rusa de Ucrania, con un modelo BETO ajustado a cinco posturas.</p>
+          <p class="byline"><strong>Mateo Gonzales Navarrete</strong> · Universidad Católica San Pablo<br>
+            Publicado el <time datetime="2026-09-02">2 de septiembre de 2026</time>. Trabajo realizado durante el semestre 2022-1.</p>
+        </div>
+        <aside class="ficha" aria-label="Ficha del trabajo">
+          <dl>
+            <div><dt>Curso</dt><dd>Introducción a Ciencia de Datos (CS351)</dd></div>
+            <div><dt>Profesor</dt><dd>Dr. Erick Gomez Nieto</dd></div>
+            <div><dt>Semestre</dt><dd>2022-1</dd></div>
+            <div><dt>Datos</dt><dd>26 000 tweets en español, 24 ciudades del Perú, enero a junio de 2022</dd></div>
+            <div><dt>Modelo</dt><dd>BETO ajustado a cinco posturas, 73,78 % de exactitud</dd></div>
+          </dl>
+        </aside>
 
-      <div class="course">
-        <p><strong>Curso:</strong> Introducción a Ciencia de Datos (CS351)</p>
-        <p><strong>Profesor:</strong> Dr. Erick Gomez Nieto</p>
-        <p><strong>Semestre:</strong> 2022–1</p>
+        <section class="spectrum" aria-label="Distribución de posturas">
+          <div class="spectrum__head">
+            <h2 class="spectrum__title">Así se repartieron los 26 000 tweets según el modelo</h2>
+            <p class="spectrum__sub">De pro-Rusia a pro-Ucrania</p>
+          </div>
+          <div class="bar" role="img" aria-label="Barra: 8,0 % a favor de Rusia, 6,1 % en contra de Ucrania, 70,5 % neutral, 13,0 % en contra de Rusia, 2,4 % a favor de Ucrania">
+            <div class="seg seg--rp"><span>8,0 %</span></div>
+            <div class="seg seg--um"><span>6,1 %</span></div>
+            <div class="seg seg--n"><span>Neutral · 70,5 %</span></div>
+            <div class="seg seg--rm"><span>13,0 %</span></div>
+            <div class="seg seg--up"></div>
+          </div>
+          <ul class="legend">
+            <li><i class="i-rp"></i><span>A favor de Rusia</span><span class="pct">8,0 % · 2 088</span></li>
+            <li><i class="i-um"></i><span>En contra de Ucrania</span><span class="pct">6,1 % · 1 597</span></li>
+            <li><i class="i-n"></i><span>Neutral</span><span class="pct">70,5 % · 18 324</span></li>
+            <li><i class="i-rm"></i><span>En contra de Rusia</span><span class="pct">13,0 % · 3 376</span></li>
+            <li><i class="i-up"></i><span>A favor de Ucrania</span><span class="pct">2,4 % · 615</span></li>
+          </ul>
+        </section>
       </div>
     </header>
 
-    <p>El 24 de febrero de 2022 Rusia inició la invasión a gran escala de Ucrania. En las semanas siguientes la guerra ocupó buena parte de la conversación pública incluso en países alejados del conflicto. En el Perú tuvo además una dimensión local: el alza de combustibles y fertilizantes se atribuyó en gran medida a la guerra y terminó alimentando protestas en abril de ese año. Este proyecto, desarrollado como trabajo final del curso, se propuso medir cómo se posicionaron los usuarios peruanos de Twitter frente al conflicto: recolectar sus publicaciones, explorarlas, etiquetar a mano una muestra y entrenar un clasificador capaz de asignar a cada tweet un bando.</p>
-
-    <p>Este artículo recorre el pipeline completo, desde la recolección de datos hasta la aplicación del modelo sobre 26 000 tweets, y resume los hallazgos.</p>
-
-    <div class="toc">
-      <strong>Contenido</strong>
-      <ol>
-        <li><a href="#objetivos">Objetivos</a></li>
-        <li><a href="#pipeline">Pipeline aplicado</a>
+    <div class="layout">
+      <aside class="rail">
+        <nav class="toc" aria-label="Contenido">
+          <p class="toc__label">Contenido</p>
           <ol>
-            <li><a href="#recoleccion">Recolección de datos</a></li>
-            <li><a href="#limpieza">Regularización y limpieza</a></li>
-            <li><a href="#exploratorio">Análisis exploratorio</a></li>
-            <li><a href="#etiquetado">Etiquetado de datos</a></li>
-            <li><a href="#entrenamiento">Entrenamiento del modelo</a></li>
-            <li><a href="#analisis">Análisis del dataset con el modelo</a></li>
+            <li><a href="#objetivos"><span class="n">01</span>Objetivos</a></li>
+            <li><a href="#pipeline"><span class="n">02</span>Pipeline aplicado</a>
+              <ol>
+                <li><a href="#recoleccion"><span class="n">2.1</span>Recolección de datos</a></li>
+                <li><a href="#limpieza"><span class="n">2.2</span>Regularización y limpieza</a></li>
+                <li><a href="#exploratorio"><span class="n">2.3</span>Análisis exploratorio</a></li>
+                <li><a href="#etiquetado"><span class="n">2.4</span>Etiquetado de datos</a></li>
+                <li><a href="#entrenamiento"><span class="n">2.5</span>Entrenamiento del modelo</a></li>
+                <li><a href="#analisis"><span class="n">2.6</span>Análisis del dataset con el modelo</a></li>
+              </ol>
+            </li>
+            <li><a href="#conclusiones"><span class="n">03</span>Conclusiones</a></li>
+            <li><a href="#limitaciones"><span class="n">04</span>Limitaciones y trabajo futuro</a></li>
+            <li><a href="#referencias"><span class="n">05</span>Referencias</a></li>
           </ol>
-        </li>
-        <li><a href="#conclusiones">Conclusiones</a></li>
-        <li><a href="#limitaciones">Limitaciones y trabajo futuro</a></li>
-        <li><a href="#referencias">Referencias</a></li>
-      </ol>
-    </div>
+        </nav>
+        <p class="rail__meta">Twint · snscrape · BETO<br>Hugging Face transformers<br>Etiquetado manual · 5 posturas</p>
+      </aside>
 
-    <h2 id="objetivos">1. Objetivos</h2>
+      <div class="prose">
+        <p class="lede">El 24 de febrero de 2022 Rusia inició la invasión a gran escala de Ucrania. En las semanas siguientes la guerra ocupó buena parte de la conversación pública incluso en países alejados del conflicto. En el Perú tuvo además una dimensión local: el alza de combustibles y fertilizantes se atribuyó en gran medida a la guerra y terminó alimentando protestas en abril de ese año. Este proyecto, desarrollado como trabajo final del curso, se propuso medir cómo se posicionaron los usuarios peruanos de Twitter frente al conflicto: recolectar sus publicaciones, explorarlas, etiquetar a mano una muestra y entrenar un clasificador capaz de asignar a cada tweet un bando.</p>
 
-    <p><strong>Objetivos principales</strong></p>
-    <ul>
-      <li>Conocer la opinión peruana sobre la invasión rusa en Ucrania.</li>
-      <li>Generar un modelo clasificador que permita determinar a qué bando apoya un tweet.</li>
-    </ul>
+        <p>Este artículo recorre el pipeline completo, desde la recolección de datos hasta la aplicación del modelo sobre 26 000 tweets, y resume los hallazgos.</p>
 
-    <p><strong>Objetivos secundarios</strong></p>
-    <ul>
-      <li>Conocer las cuentas más activas respecto a este tema.</li>
-      <li>Conocer la variación del interés respecto al tiempo.</li>
-      <li>Averiguar si existe propaganda por alguna parte beligerante.</li>
-    </ul>
+        <h2 id="objetivos"><span class="num">01</span>Objetivos</h2>
 
-    <h2 id="pipeline">2. Pipeline aplicado</h2>
+        <p><strong>Objetivos principales</strong></p>
+        <ul>
+          <li>Conocer la opinión peruana sobre la invasión rusa en Ucrania.</li>
+          <li>Generar un modelo clasificador que permita determinar a qué bando apoya un tweet.</li>
+        </ul>
 
-    <p>El trabajo se organizó en cinco etapas: recolección de datos, regularización y limpieza, análisis exploratorio, etiquetado y entrenamiento de un modelo. Las dos últimas se alimentaron mutuamente: lo que se aprendía al entrenar y aplicar el modelo obligaba a volver a la exploración, revisar etiquetas y repetir.</p>
+        <p><strong>Objetivos secundarios</strong></p>
+        <ul>
+          <li>Conocer las cuentas más activas respecto a este tema.</li>
+          <li>Conocer la variación del interés respecto al tiempo.</li>
+          <li>Averiguar si existe propaganda por alguna parte beligerante.</li>
+        </ul>
 
-    <h3 id="recoleccion">2.1 Recolección de datos</h3>
+        <h2 id="pipeline"><span class="num">02</span>Pipeline aplicado</h2>
 
-    <p>Twitter no ofrecía en 2022 una forma sencilla de descargar tweets históricos filtrados por ubicación sin pasar por su API de pago, así que se usaron dos herramientas de <em>scraping</em> que consultan la búsqueda pública sin credenciales:</p>
+        <p>El trabajo se organizó en cinco etapas: recolección de datos, regularización y limpieza, análisis exploratorio, etiquetado y entrenamiento de un modelo. Las dos últimas se alimentaron mutuamente: lo que se aprendía al entrenar y aplicar el modelo obligaba a volver a la exploración, revisar etiquetas y repetir.</p>
 
-    <ul>
-      <li><strong>Twint</strong>, una herramienta de <em>scraping</em> de Twitter y OSINT escrita en Python.</li>
-      <li><strong>snscrape</strong>, un <em>scraper</em> genérico para servicios de redes sociales (SNS, <em>social networking services</em>).</li>
-    </ul>
+        <h3 id="recoleccion"><span class="num">2.1</span>Recolección de datos</h3>
 
-    <p>Se empezó con Twint y se incorporó snscrape cuando la primera se volvió inestable. Ambas herramientas devuelven cada tweet como una línea JSON con su identificador, fecha, usuario, texto, idioma, conteo de respuestas y hashtags. Las búsquedas se construyeron combinando tres dimensiones: palabras clave, ubicación geográfica y ventana de tiempo.</p>
+        <p>Twitter no ofrecía en 2022 una forma sencilla de descargar tweets históricos filtrados por ubicación sin pasar por su API de pago, así que se usaron dos herramientas de <em>scraping</em> que consultan la búsqueda pública sin credenciales:</p>
 
-    <p><strong>Palabras clave.</strong> Twint consultó 23 términos en español e inglés. snscrape, incorporado después, usó una lista más acotada de 14 términos que excluía los más genéricos.</p>
+        <ul>
+          <li><strong>Twint</strong>, una herramienta de <em>scraping</em> de Twitter y OSINT escrita en Python.</li>
+          <li><strong>snscrape</strong>, un <em>scraper</em> genérico para servicios de redes sociales (SNS, <em>social networking services</em>).</li>
+        </ul>
 
-    <table>
-      <tr><th>Herramienta</th><th>Términos de búsqueda</th></tr>
-      <tr><td>Twint (23)</td><td>guerra, war, invasion, Ucrania, Ukraine, Rusia, Russia, Rusia vs Ucrania, Ucrania vs Rusia, Russia vs Ukraine, Ukraine vs Russia, Estados Unidos, United States, USA, Donbas, Donbass, Crimea, Putin, Zelenskyy, propaganda, intromision, Kiev, Kyiv</td></tr>
-      <tr><td>snscrape (14)</td><td>Ucrania, Ukraine, Rusia, Russia, Rusia vs Ucrania, Ucrania vs Rusia, Russia vs Ukraine, Ukraine vs Russia, Donbas, Donbass, Crimea, Zelenskyy, Kiev, Kyiv</td></tr>
-    </table>
+        <p>Se empezó con Twint y se incorporó snscrape cuando la primera se volvió inestable. Ambas herramientas devuelven cada tweet como una línea JSON con su identificador, fecha, usuario, texto, idioma, conteo de respuestas y hashtags. Las búsquedas se construyeron combinando tres dimensiones: palabras clave, ubicación geográfica y ventana de tiempo.</p>
 
-    <p><strong>Ubicación geográfica.</strong> Para restringir la búsqueda a usuarios peruanos se usó el operador <code>geocode:latitud,longitud,radio</code> de la búsqueda de Twitter, que devuelve tweets de usuarios ubicados dentro de un círculo. Se definió un círculo por cada una de las 24 capitales de departamento, con un radio ajustado al tamaño del departamento: desde 22 km para Tumbes y 33 km para Tacna hasta 180 km para Lima y 220 km para Cusco. Los círculos cubren buena parte del territorio poblado, aunque se solapan entre sí y dejan zonas de la Amazonía sin cubrir.</p>
+        <p><strong>Palabras clave.</strong> Twint consultó 23 términos en español e inglés. snscrape, incorporado después, usó una lista más acotada de 14 términos que excluía los más genéricos.</p>
 
-    <figure>
-      <img src="img/mapa-recoleccion.png" alt="Mapa del Perú con los 24 círculos de búsqueda geográfica centrados en las capitales de departamento" width="420">
-      <figcaption>Los 24 círculos de búsqueda, uno por capital de departamento. El operador <code>geocode</code> toma la ubicación del geoetiquetado del tweet o, en su defecto, de la ubicación declarada en el perfil del usuario.</figcaption>
-    </figure>
+        <div class="table">
+          <table>
+            <thead><tr><th>Herramienta</th><th>Términos de búsqueda</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">Twint (23)</td><td>guerra, war, invasion, Ucrania, Ukraine, Rusia, Russia, Rusia vs Ucrania, Ucrania vs Rusia, Russia vs Ukraine, Ukraine vs Russia, Estados Unidos, United States, USA, Donbas, Donbass, Crimea, Putin, Zelenskyy, propaganda, intromision, Kiev, Kyiv</td></tr>
+              <tr><td class="mono">snscrape (14)</td><td>Ucrania, Ukraine, Rusia, Russia, Rusia vs Ucrania, Ucrania vs Rusia, Russia vs Ukraine, Ukraine vs Russia, Donbas, Donbass, Crimea, Zelenskyy, Kiev, Kyiv</td></tr>
+            </tbody>
+          </table>
+        </div>
 
-    <p><strong>Ventanas de tiempo.</strong> Twint recorrió el periodo desde el 26 de febrero de 2022 en ventanas de dos días, con un límite de 1 000 tweets por consulta. snscrape recorrió ventanas de un día desde el 24 de enero hasta el 3 de mayo de 2022, es decir, con un mes de conversación previa a la invasión como línea base, y una segunda corrida cubrió del 1 al 24 de mayo. Cada corrida iteró sobre todas las combinaciones de término y ciudad: 552 consultas por ventana en Twint y 336 por día en snscrape, lanzadas como procesos en segundo plano en lotes de diez.</p>
+        <p><strong>Ubicación geográfica.</strong> Para restringir la búsqueda a usuarios peruanos se usó el operador <code>geocode:latitud,longitud,radio</code> de la búsqueda de Twitter, que devuelve tweets de usuarios ubicados dentro de un círculo. Se definió un círculo por cada una de las 24 capitales de departamento, con un radio ajustado al tamaño del departamento: desde 22 km para Tumbes y 33 km para Tacna hasta 180 km para Lima y 220 km para Cusco. Los círculos cubren buena parte del territorio poblado, aunque se solapan entre sí y dejan zonas de la Amazonía sin cubrir.</p>
 
-    <pre><code>snscrape --jsonl --progress --since 2022-05-01 \
+        <figure>
+          <div class="frame"><img src="img/mapa-recoleccion.png" alt="Mapa del Perú con los 24 círculos de búsqueda geográfica centrados en las capitales de departamento" width="420"></div>
+          <figcaption>Los 24 círculos de búsqueda, uno por capital de departamento. El operador <code>geocode</code> toma la ubicación del geoetiquetado del tweet o, en su defecto, de la ubicación declarada en el perfil del usuario.</figcaption>
+        </figure>
+
+        <p><strong>Ventanas de tiempo.</strong> Twint recorrió el periodo desde el 26 de febrero de 2022 en ventanas de dos días, con un límite de 1 000 tweets por consulta. snscrape recorrió ventanas de un día desde el 24 de enero hasta el 3 de mayo de 2022, es decir, con un mes de conversación previa a la invasión como línea base, y una segunda corrida cubrió del 1 al 24 de mayo. Cada corrida iteró sobre todas las combinaciones de término y ciudad: 552 consultas por ventana en Twint y 336 por día en snscrape, lanzadas como procesos en segundo plano en lotes de diez.</p>
+
+        <pre><code>snscrape --jsonl --progress --since 2022-05-01 \
   twitter-search "Ucrania geocode:-12.04318,-77.02824,180km until:2022-05-24" \
   &gt; snscrape_data/Ucrania_-12.04318,-77.02824,180km.json</code></pre>
 
-    <p>La configuración de Twint fue equivalente: salida en JSON, hashtags incluidos y las propiedades <code>Since</code>, <code>Until</code>, <code>Geo</code> y <code>Search</code> reasignadas en cada iteración del bucle sobre ventanas, ciudades y términos.</p>
+        <p>La configuración de Twint fue equivalente: salida en JSON, hashtags incluidos y las propiedades <code>Since</code>, <code>Until</code>, <code>Geo</code> y <code>Search</code> reasignadas en cada iteración del bucle sobre ventanas, ciudades y términos.</p>
 
-    <h3 id="limpieza">2.2 Regularización y limpieza de datos</h3>
+        <h3 id="limpieza"><span class="num">2.2</span>Regularización y limpieza de datos</h3>
 
-    <p><strong>Regularización.</strong> Twint y snscrape nombran y estructuran los campos de forma distinta, así que el primer paso fue transformar la salida de ambas a un formato común.</p>
+        <p><strong>Regularización.</strong> Twint y snscrape nombran y estructuran los campos de forma distinta, así que el primer paso fue transformar la salida de ambas a un formato común.</p>
 
-    <p><strong>Eliminación de duplicados.</strong> Por la forma de búsqueda los duplicados eran inevitables: un tweet que menciona «Rusia» y «Ucrania» aparece en ambas consultas, los círculos geográficos solapados devuelven el mismo tweet desde varias ciudades, y las ventanas de Twint y snscrape se superponen. Se deduplicó por el identificador del tweet.</p>
+        <p><strong>Eliminación de duplicados.</strong> Por la forma de búsqueda los duplicados eran inevitables: un tweet que menciona «Rusia» y «Ucrania» aparece en ambas consultas, los círculos geográficos solapados devuelven el mismo tweet desde varias ciudades, y las ventanas de Twint y snscrape se superponen. Se deduplicó por el identificador del tweet.</p>
 
-    <p><strong>Filtrado por términos centrales.</strong> Se conservaron solo los tweets que contenían al menos uno de 18 términos centrales, descartando los que solo coincidían con palabras genéricas como «guerra», «invasión» o «propaganda». Así se evitó que una «guerra de precios» o una discusión sobre propaganda electoral entraran al dataset. Se contabilizó además cuántos tweets tenían respuestas y cuántas respuestas quedaron fuera, ya que los <em>scrapers</em> devuelven el tweet original pero no el hilo. Los tweets se separaron por idioma y el análisis se concentró en los publicados en español.</p>
+        <p><strong>Filtrado por términos centrales.</strong> Se conservaron solo los tweets que contenían al menos uno de 18 términos centrales, descartando los que solo coincidían con palabras genéricas como «guerra», «invasión» o «propaganda». Así se evitó que una «guerra de precios» o una discusión sobre propaganda electoral entraran al dataset. Se contabilizó además cuántos tweets tenían respuestas y cuántas respuestas quedaron fuera, ya que los <em>scrapers</em> devuelven el tweet original pero no el hilo. Los tweets se separaron por idioma y el análisis se concentró en los publicados en español.</p>
 
-    <p><strong>Limpieza y lematización.</strong> Para el análisis exploratorio, el texto pasó por tres pasos:</p>
-    <ol>
-      <li>Remoción de puntuación, <em>stopwords</em>, URLs y tokens no alfabéticos.</li>
-      <li>Conversión a minúsculas.</li>
-      <li>Lematización, de modo que «rusos», «rusa» y «ruso» cuenten como una sola palabra, y los verbos se reduzcan a su infinitivo.</li>
-    </ol>
-    <p>Esta versión limpia alimentó las nubes de palabras, las frecuencias, los <em>skip-grams</em> y las proyecciones. El clasificador, en cambio, recibió el texto original, con puntuación, mayúsculas y emojis, porque el modelo base maneja su propia tokenización.</p>
+        <p><strong>Limpieza y lematización.</strong> Para el análisis exploratorio, el texto pasó por tres pasos:</p>
+        <ol>
+          <li>Remoción de puntuación, <em>stopwords</em>, URLs y tokens no alfabéticos.</li>
+          <li>Conversión a minúsculas.</li>
+          <li>Lematización, de modo que «rusos», «rusa» y «ruso» cuenten como una sola palabra, y los verbos se reduzcan a su infinitivo.</li>
+        </ol>
+        <p>Esta versión limpia alimentó las nubes de palabras, las frecuencias, los <em>skip-grams</em> y las proyecciones. El clasificador, en cambio, recibió el texto original, con puntuación, mayúsculas y emojis, porque el modelo base maneja su propia tokenización.</p>
 
-    <h3 id="exploratorio">2.3 Análisis exploratorio</h3>
+        <h3 id="exploratorio"><span class="num">2.3</span>Análisis exploratorio</h3>
 
-    <p><strong>Tweets respecto al tiempo.</strong> El volumen diario muestra con claridad cuándo la guerra ocupó la conversación peruana. Antes del 24 de febrero la actividad es casi nula. El primer pico, de unos 540 tweets diarios, llega con la invasión y decae durante marzo. El pico más alto, cercano a 1 270 tweets en un día, ocurre en la primera semana de abril y coincide con la difusión de las imágenes de Bucha, con la suspensión de Rusia del Consejo de Derechos Humanos de la ONU y, en el plano local, con el paro de transportistas y el toque de queda del 5 de abril en Lima, motivados en parte por el alza de combustibles atribuida a la guerra. Siguen repuntes a inicios y mediados de mayo y a fines de junio. Los tramos en cero de la segunda quincena de abril y de fines de mayo a mediados de junio corresponden, probablemente, a periodos no cubiertos por las corridas de recolección más que a un silencio real.</p>
+        <p><strong>Tweets respecto al tiempo.</strong> El volumen diario muestra con claridad cuándo la guerra ocupó la conversación peruana. Antes del 24 de febrero la actividad es casi nula. El primer pico, de unos 540 tweets diarios, llega con la invasión y decae durante marzo. El pico más alto, cercano a 1 270 tweets en un día, ocurre en la primera semana de abril y coincide con la difusión de las imágenes de Bucha, con la suspensión de Rusia del Consejo de Derechos Humanos de la ONU y, en el plano local, con el paro de transportistas y el toque de queda del 5 de abril en Lima, motivados en parte por el alza de combustibles atribuida a la guerra. Siguen repuntes a inicios y mediados de mayo y a fines de junio. Los tramos en cero de la segunda quincena de abril y de fines de mayo a mediados de junio corresponden, probablemente, a periodos no cubiertos por las corridas de recolección más que a un silencio real.</p>
 
-    <figure>
-      <img src="img/tweets-por-tiempo.png" alt="Serie de tiempo de tweets por día entre enero y junio de 2022, con picos a fines de febrero, inicios de abril, mayo y fines de junio" loading="lazy">
-      <figcaption>Tweets por día. La invasión del 24 de febrero produce el primer pico; el más alto llega en la primera semana de abril.</figcaption>
-    </figure>
+        <figure>
+          <div class="frame"><img src="img/tweets-por-tiempo.png" alt="Serie de tiempo de tweets por día entre enero y junio de 2022, con picos a fines de febrero, inicios de abril, mayo y fines de junio" loading="lazy"></div>
+          <figcaption>Tweets por día. La invasión del 24 de febrero produce el primer pico; el más alto llega en la primera semana de abril.</figcaption>
+        </figure>
 
-    <p><strong>Usuarios más activos.</strong> Las cuentas con más publicaciones sobre el tema son, en su mayoría, medios de comunicación: Gestión, RPP, El Comercio, La República, Exitosa, Alerta Punto PE y agregadores como Feed Peruano. Entre ellas se cuelan cuentas personales muy activas, como <code>renzito1970</code>, la segunda con más tweets, o <code>dogdega</code> y <code>revolucion_web</code>. Volveremos sobre ellas al aplicar el modelo.</p>
+        <p><strong>Usuarios más activos.</strong> Las cuentas con más publicaciones sobre el tema son, en su mayoría, medios de comunicación: Gestión, RPP, El Comercio, La República, Exitosa, Alerta Punto PE y agregadores como Feed Peruano. Entre ellas se cuelan cuentas personales muy activas, como <code>renzito1970</code>, la segunda con más tweets, o <code>dogdega</code> y <code>revolucion_web</code>. Volveremos sobre ellas al aplicar el modelo.</p>
 
-    <figure>
-      <img src="img/usuarios-mas-activos.png" alt="Curva de frecuencias de los 25 usuarios con más tweets sobre el tema" loading="lazy">
-      <figcaption>Los 25 usuarios con más tweets en el dataset. Las primeras posiciones las ocupan medios de comunicación y unas pocas cuentas personales.</figcaption>
-    </figure>
+        <figure>
+          <div class="frame"><img src="img/usuarios-mas-activos.png" alt="Curva de frecuencias de los 25 usuarios con más tweets sobre el tema" loading="lazy"></div>
+          <figcaption>Los 25 usuarios con más tweets en el dataset. Las primeras posiciones las ocupan medios de comunicación y unas pocas cuentas personales.</figcaption>
+        </figure>
 
-    <p><strong>Vocabulario.</strong> La nube de palabras y la curva de frecuencias muestran que la conversación gira alrededor de Rusia más que de Ucrania: «ruso» aparece unas 3 000 veces, contra unas 1 400 de «ucraniano». Le siguen «país», «poder», «otan», «eeuu», «mundo», «invasión», «chino», «nazi», «perú», «conflicto», «arma» y «europa». La presencia destacada de OTAN, Estados Unidos y China sugiere que buena parte de los usuarios encuadró la guerra como una confrontación geopolítica entre bloques y no solo como un conflicto entre dos países, y la aparición de «nazi» entre las palabras frecuentes recoge el marco de «desnazificación» usado por la propaganda rusa, ya sea para repetirlo o para rebatirlo.</p>
+        <p><strong>Vocabulario.</strong> La nube de palabras y la curva de frecuencias muestran que la conversación gira alrededor de Rusia más que de Ucrania: «ruso» aparece unas 3 000 veces, contra unas 1 400 de «ucraniano». Le siguen «país», «poder», «otan», «eeuu», «mundo», «invasión», «chino», «nazi», «perú», «conflicto», «arma» y «europa». La presencia destacada de OTAN, Estados Unidos y China sugiere que buena parte de los usuarios encuadró la guerra como una confrontación geopolítica entre bloques y no solo como un conflicto entre dos países, y la aparición de «nazi» entre las palabras frecuentes recoge el marco de «desnazificación» usado por la propaganda rusa, ya sea para repetirlo o para rebatirlo.</p>
 
-    <div class="two">
-      <figure>
-        <img src="img/wordcloud.png" alt="Nube de palabras dominada por ruso, país, ir, ucraniano, poder, otan, eeuu, mundo" loading="lazy">
-        <figcaption>Nube de palabras sobre el texto lematizado.</figcaption>
-      </figure>
-      <figure>
-        <img src="img/frecuencia-palabras.png" alt="Gráfico de frecuencias de las 30 palabras más comunes" loading="lazy">
-        <figcaption>Frecuencia de las 30 palabras más comunes.</figcaption>
-      </figure>
-    </div>
+        <div class="two">
+          <figure>
+            <div class="frame"><img src="img/wordcloud.png" alt="Nube de palabras dominada por ruso, país, ir, ucraniano, poder, otan, eeuu, mundo" loading="lazy"></div>
+            <figcaption>Nube de palabras sobre el texto lematizado.</figcaption>
+          </figure>
+          <figure>
+            <div class="frame"><img src="img/frecuencia-palabras.png" alt="Gráfico de frecuencias de las 30 palabras más comunes" loading="lazy"></div>
+            <figcaption>Frecuencia de las 30 palabras más comunes.</figcaption>
+          </figure>
+        </div>
 
-    <p><strong>Bolsa de palabras y TF-IDF.</strong> Se construyeron representaciones de bolsa de palabras (BoW) y TF-IDF, que sirvieron de base para las proyecciones posteriores. Las diez palabras más comunes del vocabulario resultante repiten la lectura anterior.</p>
+        <p><strong>Bolsa de palabras y TF-IDF.</strong> Se construyeron representaciones de bolsa de palabras (BoW) y TF-IDF, que sirvieron de base para las proyecciones posteriores. Las diez palabras más comunes del vocabulario resultante repiten la lectura anterior.</p>
 
-    <figure>
-      <img src="img/bow-top10.png" alt="Barras de las diez palabras más comunes: ruso, ir, país, poder, otan, eeuu, ucraniano, mundo, ser, invasión" width="640" loading="lazy">
-      <figcaption>Las diez palabras más comunes en la bolsa de palabras.</figcaption>
-    </figure>
+        <figure>
+          <div class="frame"><img src="img/bow-top10.png" alt="Barras de las diez palabras más comunes: ruso, ir, país, poder, otan, eeuu, ucraniano, mundo, ser, invasión" width="640" loading="lazy"></div>
+          <figcaption>Las diez palabras más comunes en la bolsa de palabras.</figcaption>
+        </figure>
 
-    <p><strong>Skip-grams.</strong> Los <em>skip-grams</em> permiten ver qué palabras aparecen juntas aunque no sean adyacentes. Los 2-skip-bigramas más frecuentes son «invasión ruso», «fuerza armado», «último hora», «unión europeo», «pedro castillo» y «derecho humanos». Los 2-skip-trigramas están dominados por «consejo derecho humanos» y sus variantes con «suspender», que corresponden a la votación del 7 de abril de 2022 en la que la Asamblea General de la ONU suspendió a Rusia del Consejo de Derechos Humanos. También aparece «último hora directo», la marca de los medios en sus noticias de última hora. Que «pedro castillo», presidente del Perú en ese momento, figure entre los bigramas más frecuentes confirma que la conversación local mezcló la guerra con la política interna.</p>
+        <p><strong>Skip-grams.</strong> Los <em>skip-grams</em> permiten ver qué palabras aparecen juntas aunque no sean adyacentes. Los 2-skip-bigramas más frecuentes son «invasión ruso», «fuerza armado», «último hora», «unión europeo», «pedro castillo» y «derecho humanos». Los 2-skip-trigramas están dominados por «consejo derecho humanos» y sus variantes con «suspender», que corresponden a la votación del 7 de abril de 2022 en la que la Asamblea General de la ONU suspendió a Rusia del Consejo de Derechos Humanos. También aparece «último hora directo», la marca de los medios en sus noticias de última hora. Que «pedro castillo», presidente del Perú en ese momento, figure entre los bigramas más frecuentes confirma que la conversación local mezcló la guerra con la política interna.</p>
 
-    <div class="two">
-      <figure>
-        <img src="img/skipgram-bigramas.png" alt="Diez 2-skip-bigramas más frecuentes" loading="lazy">
-        <figcaption>2-skip-bigramas más frecuentes.</figcaption>
-      </figure>
-      <figure>
-        <img src="img/skipgram-trigramas.png" alt="Diez 2-skip-trigramas más frecuentes" loading="lazy">
-        <figcaption>2-skip-trigramas más frecuentes.</figcaption>
-      </figure>
-    </div>
+        <div class="two">
+          <figure>
+            <div class="frame"><img src="img/skipgram-bigramas.png" alt="Diez 2-skip-bigramas más frecuentes" loading="lazy"></div>
+            <figcaption>2-skip-bigramas más frecuentes.</figcaption>
+          </figure>
+          <figure>
+            <div class="frame"><img src="img/skipgram-trigramas.png" alt="Diez 2-skip-trigramas más frecuentes" loading="lazy"></div>
+            <figcaption>2-skip-trigramas más frecuentes.</figcaption>
+          </figure>
+        </div>
 
-    <p><strong>PCA y clustering.</strong> Se proyectó la representación TF-IDF a dos componentes principales, retirando antes las palabras clave de búsqueda para que la estructura no reflejara simplemente qué término había recuperado cada tweet. La proyección forma dos brazos y el <em>clustering</em> aplicado sobre ella separa grupos a lo largo de esos brazos, pero ninguno se corresponde con una postura identificable al inspeccionar los tweets de cada grupo.</p>
+        <p><strong>PCA y clustering.</strong> Se proyectó la representación TF-IDF a dos componentes principales, retirando antes las palabras clave de búsqueda para que la estructura no reflejara simplemente qué término había recuperado cada tweet. La proyección forma dos brazos y el <em>clustering</em> aplicado sobre ella separa grupos a lo largo de esos brazos, pero ninguno se corresponde con una postura identificable al inspeccionar los tweets de cada grupo.</p>
 
-    <figure>
-      <img src="img/pca-clustering.png" alt="Proyección PCA en dos componentes con seis grupos coloreados distribuidos en dos brazos" width="480" loading="lazy">
-      <figcaption>PCA en dos componentes tras retirar las palabras clave, con los grupos obtenidos por <em>clustering</em>.</figcaption>
-    </figure>
+        <figure>
+          <div class="frame"><img src="img/pca-clustering.png" alt="Proyección PCA en dos componentes con seis grupos coloreados distribuidos en dos brazos" width="480" loading="lazy"></div>
+          <figcaption>PCA en dos componentes tras retirar las palabras clave, con los grupos obtenidos por <em>clustering</em>.</figcaption>
+        </figure>
 
-    <p><strong>UMAP.</strong> La proyección UMAP tampoco ayudó: casi todos los tweets caen en una sola masa densa, con tres puntos aislados. Los métodos no supervisados no revelaron una estructura de opiniones aprovechable, lo que motivó pasar al etiquetado manual y a un modelo supervisado.</p>
+        <p><strong>UMAP.</strong> La proyección UMAP tampoco ayudó: casi todos los tweets caen en una sola masa densa, con tres puntos aislados. Los métodos no supervisados no revelaron una estructura de opiniones aprovechable, lo que motivó pasar al etiquetado manual y a un modelo supervisado.</p>
 
-    <figure>
-      <img src="img/umap.png" alt="Proyección UMAP con una única masa densa de puntos y tres puntos aislados" width="560" loading="lazy">
-      <figcaption>Proyección UMAP del dataset.</figcaption>
-    </figure>
+        <figure>
+          <div class="frame"><img src="img/umap.png" alt="Proyección UMAP con una única masa densa de puntos y tres puntos aislados" width="560" loading="lazy"></div>
+          <figcaption>Proyección UMAP del dataset.</figcaption>
+        </figure>
 
-    <h3 id="etiquetado">2.4 Etiquetado de datos</h3>
+        <h3 id="etiquetado"><span class="num">2.4</span>Etiquetado de datos</h3>
 
-    <p>Para entrenar un clasificador hacía falta un conjunto de tweets etiquetados a mano. La primera decisión fue qué escala usar. Una escala de tres posiciones, a favor de Rusia, neutral y a favor de Ucrania, resulta insuficiente: muchos tweets critican a Ucrania, a Zelensky o a la OTAN sin elogiar a Rusia, y muchos otros condenan a Putin sin tomar partido por Ucrania. Se definió entonces una escala de cinco posiciones, ordenada de un extremo al otro, y se conservó la de tres como alternativa para comparar.</p>
+        <p>Para entrenar un clasificador hacía falta un conjunto de tweets etiquetados a mano. La primera decisión fue qué escala usar. Una escala de tres posiciones, a favor de Rusia, neutral y a favor de Ucrania, resulta insuficiente: muchos tweets critican a Ucrania, a Zelensky o a la OTAN sin elogiar a Rusia, y muchos otros condenan a Putin sin tomar partido por Ucrania. Se definió entonces una escala de cinco posiciones, ordenada de un extremo al otro, y se conservó la de tres como alternativa para comparar.</p>
 
-    <table>
-      <tr><th>Etiqueta</th><th>Código</th><th>Nombre</th><th>Significado</th></tr>
-      <tr><td class="num">0</td><td>R+</td><td><code>pro_russia</code></td><td>A favor de Rusia</td></tr>
-      <tr><td class="num">1</td><td>U−</td><td><code>against_ukraine</code></td><td>En contra de Ucrania</td></tr>
-      <tr><td class="num">2</td><td>N</td><td><code>neutral</code></td><td>Neutral o informativo</td></tr>
-      <tr><td class="num">3</td><td>R−</td><td><code>against_russia</code></td><td>En contra de Rusia</td></tr>
-      <tr><td class="num">4</td><td>U+</td><td><code>pro_ukraine</code></td><td>A favor de Ucrania</td></tr>
-    </table>
+        <div class="table">
+          <table>
+            <thead><tr><th class="num">Etiqueta</th><th>Código</th><th>Nombre</th><th>Significado</th></tr></thead>
+            <tbody>
+              <tr><td class="num">0</td><td class="mono">R+</td><td><span class="chip chip--rp">pro_russia</span></td><td>A favor de Rusia</td></tr>
+              <tr><td class="num">1</td><td class="mono">U−</td><td><span class="chip chip--um">against_ukraine</span></td><td>En contra de Ucrania</td></tr>
+              <tr><td class="num">2</td><td class="mono">N</td><td><span class="chip chip--n">neutral</span></td><td>Neutral o informativo</td></tr>
+              <tr><td class="num">3</td><td class="mono">R−</td><td><span class="chip chip--rm">against_russia</span></td><td>En contra de Rusia</td></tr>
+              <tr><td class="num">4</td><td class="mono">U+</td><td><span class="chip chip--up">pro_ukraine</span></td><td>A favor de Ucrania</td></tr>
+            </tbody>
+          </table>
+        </div>
 
-    <p>Un ejemplo de cada categoría, tomado del conjunto etiquetado:</p>
+        <p>Un ejemplo de cada categoría, tomado del conjunto etiquetado:</p>
 
-    <table>
-      <tr><th>Etiqueta</th><th>Tweet</th></tr>
-      <tr><td>0 · pro_russia</td><td>«Protestas en Bulgaria contra el suministro de armas a Ucrania: “¡Nosotros, los búlgaros, no permitimos el suministro de equipo militar a Ucrania e insistimos en que Rusia rompa la espalda de los nazis estadounidenses-ucranianos de una vez por todas!”»</td></tr>
-      <tr><td>1 · against_ukraine</td><td>«Es inaceptable que la inteligencia sólo sea usada para destruir, boicotear la paz en el planeta, Putin ya ganó, Zelenski quedó como un estúpido bufón que fue utilizado para beneplácito de USA.»</td></tr>
-      <tr><td>2 · neutral</td><td>«Una serie de ataques intensos contra los objetos de los militantes de las Fuerzas Armadas de Ucrania en el asentamiento. Severodonetsk, Rubizhnoye, Lisichansk, Kremennaya, Gornoye, Popasnaya, etc.»</td></tr>
-      <tr><td>3 · against_russia</td><td>«Putin es un asesino y genocida.»</td></tr>
-      <tr><td>4 · pro_ukraine</td><td>«Dios salve a Ucrania»</td></tr>
-    </table>
+        <div class="tweets">
+          <div class="tweet">
+            <div class="tweet__head"><span class="chip chip--rp">pro_russia</span><span class="tweet__id">Etiqueta 0</span></div>
+            <p>«Protestas en Bulgaria contra el suministro de armas a Ucrania: “¡Nosotros, los búlgaros, no permitimos el suministro de equipo militar a Ucrania e insistimos en que Rusia rompa la espalda de los nazis estadounidenses-ucranianos de una vez por todas!”»</p>
+          </div>
+          <div class="tweet">
+            <div class="tweet__head"><span class="chip chip--um">against_ukraine</span><span class="tweet__id">Etiqueta 1</span></div>
+            <p>«Es inaceptable que la inteligencia sólo sea usada para destruir, boicotear la paz en el planeta, Putin ya ganó, Zelenski quedó como un estúpido bufón que fue utilizado para beneplácito de USA.»</p>
+          </div>
+          <div class="tweet">
+            <div class="tweet__head"><span class="chip chip--n">neutral</span><span class="tweet__id">Etiqueta 2</span></div>
+            <p>«Una serie de ataques intensos contra los objetos de los militantes de las Fuerzas Armadas de Ucrania en el asentamiento. Severodonetsk, Rubizhnoye, Lisichansk, Kremennaya, Gornoye, Popasnaya, etc.»</p>
+          </div>
+          <div class="tweet">
+            <div class="tweet__head"><span class="chip chip--rm">against_russia</span><span class="tweet__id">Etiqueta 3</span></div>
+            <p>«Putin es un asesino y genocida.»</p>
+          </div>
+          <div class="tweet">
+            <div class="tweet__head"><span class="chip chip--up">pro_ukraine</span><span class="tweet__id">Etiqueta 4</span></div>
+            <p>«Dios salve a Ucrania»</p>
+          </div>
+        </div>
 
-    <p>Nótese que el tercer ejemplo, un parte militar redactado desde el punto de vista ruso, se etiqueta como neutral: la categoría agrupa el contenido informativo aunque provenga de una de las partes. El etiquetado se hizo sobre un subconjunto reducido del dataset, lo que condicionó los resultados que siguen.</p>
+        <p>Nótese que el tercer ejemplo, un parte militar redactado desde el punto de vista ruso, se etiqueta como neutral: la categoría agrupa el contenido informativo aunque provenga de una de las partes. El etiquetado se hizo sobre un subconjunto reducido del dataset, lo que condicionó los resultados que siguen.</p>
 
-    <h3 id="entrenamiento">2.5 Entrenamiento del modelo</h3>
+        <h3 id="entrenamiento"><span class="num">2.5</span>Entrenamiento del modelo</h3>
 
-    <p>Con el conjunto etiquetado se ajustó un modelo de clasificación de secuencias con la biblioteca <code>transformers</code> de Hugging Face. Como modelo base se eligió <code>finiteautomata/beto-sentiment-analysis</code>, una versión de BETO, el BERT entrenado en español, ya ajustada para análisis de sentimiento por el proyecto pysentimiento. Partir de un modelo que ya distingue polaridad en español acorta el entrenamiento y aprovecha un conjunto etiquetado pequeño. Se usó el tokenizador del propio modelo base y una partición de 80 % para entrenamiento y 20 % para evaluación.</p>
+        <p>Con el conjunto etiquetado se ajustó un modelo de clasificación de secuencias con la biblioteca <code>transformers</code> de Hugging Face. Como modelo base se eligió <code>finiteautomata/beto-sentiment-analysis</code>, una versión de BETO, el BERT entrenado en español, ya ajustada para análisis de sentimiento por el proyecto pysentimiento. Partir de un modelo que ya distingue polaridad en español acorta el entrenamiento y aprovecha un conjunto etiquetado pequeño. Se usó el tokenizador del propio modelo base y una partición de 80 % para entrenamiento y 20 % para evaluación.</p>
 
-    <pre><code>from transformers import AutoTokenizer
+        <pre><code>from transformers import AutoTokenizer
 
 base_model_name = "finiteautomata/beto-sentiment-analysis"
 training_set_percentage = 0.8
@@ -250,126 +486,159 @@ training_set_percentage = 0.8
 model = base_model_name
 tokenizer = AutoTokenizer.from_pretrained(model)</code></pre>
 
-    <p>Se entrenaron dos variantes, una con tres etiquetas y otra con cinco, y se evaluaron con exactitud y F1 sobre la partición de prueba.</p>
+        <p>Se entrenaron dos variantes, una con tres etiquetas y otra con cinco, y se evaluaron con exactitud y F1 sobre la partición de prueba.</p>
 
-    <table>
-      <tr><th></th><th class="num">3 etiquetas</th><th class="num">5 etiquetas</th></tr>
-      <tr><td>Exactitud (<em>accuracy</em>)</td><td class="num">78,92 %</td><td class="num">73,78 %</td></tr>
-      <tr><td>F1</td><td class="num">79,04 %</td><td class="num">74,56 %</td></tr>
-    </table>
+        <div class="table">
+          <table>
+            <thead><tr><th></th><th class="num">3 etiquetas</th><th class="num">5 etiquetas (elegido)</th></tr></thead>
+            <tbody>
+              <tr><td>Exactitud (<em>accuracy</em>)</td><td class="num">78,92 %</td><td class="num">73,78 %</td></tr>
+              <tr><td>F1</td><td class="num">79,04 %</td><td class="num">74,56 %</td></tr>
+            </tbody>
+          </table>
+        </div>
 
-    <p><strong>Elección del modelo.</strong> La variante de tres etiquetas obtiene unos cinco puntos más en ambas métricas, pero lo hace a costa de fusionar posturas distintas. Se eligió el modelo de cinco etiquetas: pierde algo de precisión, pero conserva la diferencia entre atacar a Ucrania y defender a Rusia, o entre condenar a Rusia y apoyar a Ucrania, que era justamente lo que se quería medir. Sobre los cinco ejemplos de la sección anterior el modelo elegido reproduce las etiquetas manuales.</p>
+        <p><strong>Elección del modelo.</strong> La variante de tres etiquetas obtiene unos cinco puntos más en ambas métricas, pero lo hace a costa de fusionar posturas distintas. Se eligió el modelo de cinco etiquetas: pierde algo de precisión, pero conserva la diferencia entre atacar a Ucrania y defender a Rusia, o entre condenar a Rusia y apoyar a Ucrania, que era justamente lo que se quería medir. Sobre los cinco ejemplos de la sección anterior el modelo elegido reproduce las etiquetas manuales.</p>
 
-    <h3 id="analisis">2.6 Análisis del dataset usando el modelo</h3>
+        <h3 id="analisis"><span class="num">2.6</span>Análisis del dataset usando el modelo</h3>
 
-    <p>El modelo de cinco etiquetas se aplicó a los 26 000 tweets del dataset limpio. Esta es la distribución resultante.</p>
+        <p>El modelo de cinco etiquetas se aplicó a los 26 000 tweets del dataset limpio. Esta es la distribución resultante.</p>
 
-    <table>
-      <tr><th>Categoría</th><th class="num">Tweets</th><th class="num">% del total</th><th class="num">% de los no neutrales</th></tr>
-      <tr><td>neutral</td><td class="num">18 324</td><td class="num">70,5 %</td><td class="num">—</td></tr>
-      <tr><td>against_russia</td><td class="num">3 376</td><td class="num">13,0 %</td><td class="num">44,0 %</td></tr>
-      <tr><td>pro_russia</td><td class="num">2 088</td><td class="num">8,0 %</td><td class="num">27,2 %</td></tr>
-      <tr><td>against_ukraine</td><td class="num">1 597</td><td class="num">6,1 %</td><td class="num">20,8 %</td></tr>
-      <tr><td>pro_ukraine</td><td class="num">615</td><td class="num">2,4 %</td><td class="num">8,0 %</td></tr>
-      <tr><td><strong>Total</strong></td><td class="num"><strong>26 000</strong></td><td class="num">100 %</td><td class="num">7 676 no neutrales</td></tr>
-    </table>
+        <div class="table">
+          <table>
+            <thead><tr><th>Categoría</th><th class="num">Tweets</th><th class="num">% del total</th><th class="num">% de los no neutrales</th><th class="barcell"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="chip chip--n">neutral</span></td><td class="num">18 324</td><td class="num">70,5 %</td><td class="num">—</td><td class="barcell"><i style="width: 100%; background: var(--n);"></i></td></tr>
+              <tr><td><span class="chip chip--rm">against_russia</span></td><td class="num">3 376</td><td class="num">13,0 %</td><td class="num">44,0 %</td><td class="barcell"><i style="width: 18.4%; background: var(--ua-soft); outline: 1px solid var(--ua); outline-offset: -1px;"></i></td></tr>
+              <tr><td><span class="chip chip--rp">pro_russia</span></td><td class="num">2 088</td><td class="num">8,0 %</td><td class="num">27,2 %</td><td class="barcell"><i style="width: 11.4%; background: var(--ru);"></i></td></tr>
+              <tr><td><span class="chip chip--um">against_ukraine</span></td><td class="num">1 597</td><td class="num">6,1 %</td><td class="num">20,8 %</td><td class="barcell"><i style="width: 8.7%; background: var(--ru-soft); outline: 1px solid var(--ru); outline-offset: -1px;"></i></td></tr>
+              <tr><td><span class="chip chip--up">pro_ukraine</span></td><td class="num">615</td><td class="num">2,4 %</td><td class="num">8,0 %</td><td class="barcell"><i style="width: 3.4%; background: var(--ua);"></i></td></tr>
+              <tr><td class="total">Total</td><td class="num total">26 000</td><td class="num">100 %</td><td class="num">7 676 no neutrales</td><td class="barcell"></td></tr>
+            </tbody>
+          </table>
+        </div>
 
-    <div class="two">
-      <figure>
-        <img src="img/tweets-por-categoria.png" alt="Barras de tweets por categoría; neutral domina con más de 18 000" loading="lazy">
-        <figcaption>Tweets por categoría.</figcaption>
-      </figure>
-      <figure>
-        <img src="img/tweets-por-categoria-sin-neutral.png" alt="Barras de tweets por categoría sin la categoría neutral" loading="lazy">
-        <figcaption>Las cuatro categorías con postura, sin la neutral.</figcaption>
-      </figure>
+        <div class="two">
+          <figure>
+            <div class="frame"><img src="img/tweets-por-categoria.png" alt="Barras de tweets por categoría; neutral domina con más de 18 000" loading="lazy"></div>
+            <figcaption>Tweets por categoría.</figcaption>
+          </figure>
+          <figure>
+            <div class="frame"><img src="img/tweets-por-categoria-sin-neutral.png" alt="Barras de tweets por categoría sin la categoría neutral" loading="lazy"></div>
+            <figcaption>Las cuatro categorías con postura, sin la neutral.</figcaption>
+          </figure>
+        </div>
+
+        <p>Tres lecturas se desprenden de la tabla:</p>
+
+        <div class="readings">
+          <div class="reading">
+            <div><span class="chip chip--n">neutral</span></div>
+            <h4>Siete de cada diez tweets son neutrales.</h4>
+            <p>La mayor parte de la conversación es informativa: noticias, partes de guerra, cifras. Esto es coherente con que los usuarios más activos sean medios de comunicación.</p>
+          </div>
+          <div class="reading">
+            <div><span class="chip chip--rm">against_russia</span></div>
+            <h4>Se rechaza a Rusia mucho más de lo que se apoya a Ucrania.</h4>
+            <p>Los tweets contra Rusia son más de cinco veces los tweets a favor de Ucrania. La postura mayoritaria entre quienes opinan es la condena a Putin y a la invasión, no la adhesión a la causa ucraniana.</p>
+          </div>
+          <div class="reading">
+            <div><span class="chip chip--rp">pro_russia</span></div>
+            <h4>El bloque prorruso no es marginal.</h4>
+            <p>Sumando los tweets a favor de Rusia y en contra de Ucrania se llega a 3 685, frente a 3 991 del bloque contrario. Entre los tweets con postura, el 48 % se alinea con Rusia y el 52 % con Ucrania.</p>
+          </div>
+        </div>
+
+        <p><strong>Usuarios por categoría.</strong> Al mirar quién publica en cada categoría aparecen patrones que la distribución agregada esconde.</p>
+
+        <figure>
+          <div class="frame"><img src="img/usuarios-neutral.png" alt="Usuarios con más tweets neutrales; los primeros son gestionpe, rppnoticiasperu, litrillostf, revolucion_web y elcomercio_peru" loading="lazy"></div>
+          <figcaption><span class="chip chip--n">neutral</span>Usuarios con más tweets etiquetados como neutrales (18 324 en total). Los medios de comunicación ocupan las primeras posiciones.</figcaption>
+        </figure>
+
+        <p>Los medios (Gestión, RPP, El Comercio, La República, Exitosa, Andina) concentran sus publicaciones en la categoría neutral, lo que confirma que informaron sin tomar partido explícito, al menos según el modelo.</p>
+
+        <div class="two">
+          <figure>
+            <div class="frame"><img src="img/usuarios-pro-rusia.png" alt="Usuarios con más tweets a favor de Rusia; renzito1970 encabeza con cerca de 100" loading="lazy"></div>
+            <figcaption><span class="chip chip--rp">pro_russia</span>Usuarios con más tweets a favor de Rusia (2 088 en total).</figcaption>
+          </figure>
+          <figure>
+            <div class="frame"><img src="img/usuarios-contra-ucrania.png" alt="Usuarios con más tweets en contra de Ucrania; renzito1970 encabeza con cerca de 175" loading="lazy"></div>
+            <figcaption><span class="chip chip--um">against_ukraine</span>Usuarios con más tweets en contra de Ucrania (1 597 en total).</figcaption>
+          </figure>
+        </div>
+
+        <p>La cuenta <code>renzito1970</code> encabeza de lejos ambas categorías del bloque prorruso: cerca de 100 tweets a favor de Rusia y unos 175 en contra de Ucrania, casi cuatro veces más que la siguiente cuenta en cada lista. Es la segunda cuenta más activa de todo el dataset y alrededor del 60 % de sus publicaciones caen en ese bloque. Le siguen <code>dogdega</code>, <code>isacb2021</code>, <code>bejarludwing</code> y <code>revolucion_web</code>, con volúmenes mucho menores.</p>
+
+        <div class="two">
+          <figure>
+            <div class="frame"><img src="img/usuarios-contra-rusia.png" alt="Usuarios con más tweets en contra de Rusia; cristhian__s, giovanna_527 y monologuistax encabezan" loading="lazy"></div>
+            <figcaption><span class="chip chip--rm">against_russia</span>Usuarios con más tweets en contra de Rusia (3 376 en total).</figcaption>
+          </figure>
+          <figure>
+            <div class="frame"><img src="img/usuarios-pro-ucrania.png" alt="Usuarios con más tweets a favor de Ucrania; rafaeltorrescr4 encabeza con cerca de 140" loading="lazy"></div>
+            <figcaption><span class="chip chip--up">pro_ukraine</span>Usuarios con más tweets a favor de Ucrania (615 en total).</figcaption>
+          </figure>
+        </div>
+
+        <p>En el bloque contrario el reparto es más parejo en la categoría contra Rusia, donde <code>cristhian__s</code>, <code>giovanna_527</code> y <code>monologuistax</code> superan los 90 tweets cada uno. La categoría a favor de Ucrania, en cambio, depende de una sola cuenta: <code>rafaeltorrescr4</code> aporta cerca de 140 de los 615 tweets, casi una cuarta parte, y ninguna otra cuenta pasa de diez.</p>
+
+        <p>Un detalle que conviene señalar: varias cuentas aparecen entre las más activas de categorías opuestas. <code>davidgr1714</code>, <code>monologuistax</code>, <code>bejarludwing</code> y <code>cristhian__s</code> figuran tanto en la lista contra Rusia como en la lista a favor de Rusia. Puede tratarse de usuarios que matizan su posición, pero es más plausible que refleje una debilidad del modelo: como parte de un modelo de sentimiento, detecta bien la negatividad, pero le cuesta más identificar contra quién va dirigida.</p>
+
+        <p><strong>Usuarios únicos por categoría.</strong> Contando cuentas distintas en lugar de tweets, la imagen se mantiene: alrededor de 4 900 cuentas publicaron al menos un tweet neutral, unas 1 400 al menos uno contra Rusia, unas 1 050 al menos uno a favor de Rusia, unas 750 al menos uno contra Ucrania y solo unas 330 al menos uno a favor de Ucrania.</p>
+
+        <figure>
+          <div class="frame"><img src="img/usuarios-unicos-por-categoria.png" alt="Barras de usuarios únicos por categoría" width="480" loading="lazy"></div>
+          <figcaption>Cuentas distintas con al menos un tweet en cada categoría.</figcaption>
+        </figure>
+
+        <h2 id="conclusiones"><span class="num">03</span>Conclusiones</h2>
+
+        <ol class="findings">
+          <li><span class="n">01</span><span>Los usuarios peruanos en Twitter, en general, muestran una posición neutral respecto al tema de la guerra.</span></li>
+          <li><span class="n">02</span><span>Los noticieros peruanos muestran una posición neutral en la mayoría de sus publicaciones.</span></li>
+          <li><span class="n">03</span><span>Las opiniones respecto a la guerra son mayormente de rechazo a Rusia más que de apoyo a Ucrania.</span></li>
+          <li><span class="n">04</span><span>Existe una cantidad considerable de publicaciones a favor de Rusia y en contra de Ucrania.</span></li>
+          <li><span class="n">05</span><span>Existen cuentas con claros sesgos al realizar varias publicaciones. Con la versión actual del modelo no se puede determinar si existe propaganda política.</span></li>
+          <li><span class="n">06</span><span>El modelo obtenido muestra buenos resultados a pesar de haber sido entrenado con un conjunto de datos reducido. Se puede entrenar el modelo con más datos para lograr un mejor desempeño.</span></li>
+        </ol>
+
+        <h2 id="limitaciones"><span class="num">04</span>Limitaciones y trabajo futuro</h2>
+
+        <ul class="limits">
+          <li><strong>La muestra no es la población.</strong> El operador <code>geocode</code> solo alcanza a usuarios que geoetiquetan sus tweets o declaran una ubicación en su perfil. Los usuarios peruanos sin ubicación quedan fuera, y los círculos de búsqueda dejan zonas sin cubrir.</li>
+          <li><strong>Solo tweets originales.</strong> Los <em>scrapers</em> no devuelven las respuestas, donde suele concentrarse la discusión más polarizada. El script de limpieza contabiliza cuántas respuestas se perdieron, pero no las recupera.</li>
+          <li><strong>Filtrado por subcadena.</strong> El filtro de términos centrales busca coincidencias de subcadena, de modo que términos cortos como «USA» coinciden también con «usar» o «acusa» e introducen algo de ruido.</li>
+          <li><strong>Conjunto etiquetado pequeño y desbalanceado.</strong> La categoría a favor de Ucrania es rara en el dataset y por tanto también en las etiquetas, lo que explica en parte su dependencia de una sola cuenta. Ampliar el etiquetado, sobre todo en las clases minoritarias, es la mejora más directa.</li>
+          <li><strong>Objetivo de la postura.</strong> Los cruces de cuentas entre categorías opuestas sugieren que el modelo confunde a veces contra quién va dirigida una crítica. Un esquema de etiquetado que separe polaridad y objetivo, o un modelo de <em>stance detection</em> en lugar de uno de sentimiento como base, atacaría el problema de raíz.</li>
+          <li><strong>Propaganda.</strong> Detectar propaganda coordinada exige mirar más allá del texto: fecha de creación de las cuentas, cadencia de publicación, redes de retuits y repetición de contenido entre cuentas. El proyecto identificó cuentas con sesgo marcado, pero no tuvo elementos para afirmar que respondieran a una campaña.</li>
+        </ul>
+
+        <div class="note">
+          <span class="tag">Nota de 2026</span>
+          <p>Este trabajo se realizó en 2022, cuando Twint y snscrape todavía podían consultar la búsqueda pública de Twitter. Tras los cambios de la plataforma en 2023 ambas herramientas dejaron de funcionar contra X, por lo que el pipeline de recolección no puede reejecutarse tal cual hoy. El resto del pipeline, desde la limpieza hasta el entrenamiento, sigue siendo aplicable a cualquier colección de textos.</p>
+        </div>
+
+        <h2 id="referencias"><span class="num">05</span>Referencias</h2>
+
+        <ol class="refs">
+          <li><span>Dave, R. (2020, 4 de diciembre). <em>Industrial Classification of Websites by Machine Learning with hands-on Python</em>. Medium. <a href="https://towardsdatascience.com/industrial-classification-of-websites-by-machine-learning-with-hands-on-python-3761b1b530f1">https://towardsdatascience.com/industrial-classification-of-websites-by-machine-learning-with-hands-on-python-3761b1b530f1</a></span></li>
+          <li><span>Lynn, S. (2021, 1 de septiembre). <em>Intro to Word Embeddings and Vectors for Text Analysis</em>. <a href="https://www.shanelynn.ie/get-busy-with-word-embeddings-introduction/">https://www.shanelynn.ie/get-busy-with-word-embeddings-introduction/</a></span></li>
+          <li><span>Hugging Face. <em>Text classification</em>. <a href="https://huggingface.co/docs/transformers/tasks/sequence_classification">https://huggingface.co/docs/transformers/tasks/sequence_classification</a></span></li>
+          <li><span><em>Fine-tuning pretrained NLP models with Huggingface's Trainer</em>. Medium. <a href="https://towardsdatascience.com/fine-tuning-pretrained-nlp-models-with-huggingfaces-trainer-6326a4456e7b">https://towardsdatascience.com/fine-tuning-pretrained-nlp-models-with-huggingfaces-trainer-6326a4456e7b</a></span></li>
+          <li><span>Pérez, J. M., Giudici, J. C. y Luque, F. <em>pysentimiento</em> y el modelo <code>finiteautomata/beto-sentiment-analysis</code>. <a href="https://huggingface.co/finiteautomata/beto-sentiment-analysis">https://huggingface.co/finiteautomata/beto-sentiment-analysis</a></span></li>
+          <li><span>Twint: <a href="https://github.com/twintproject/twint">github.com/twintproject/twint</a>. snscrape: <a href="https://github.com/JustAnotherArchivist/snscrape">github.com/JustAnotherArchivist/snscrape</a>.</span></li>
+        </ol>
+      </div>
     </div>
-
-    <p>Tres lecturas se desprenden de la tabla:</p>
-    <ul>
-      <li><strong>Siete de cada diez tweets son neutrales.</strong> La mayor parte de la conversación es informativa: noticias, partes de guerra, cifras. Esto es coherente con que los usuarios más activos sean medios de comunicación.</li>
-      <li><strong>Se rechaza a Rusia mucho más de lo que se apoya a Ucrania.</strong> Los tweets contra Rusia son más de cinco veces los tweets a favor de Ucrania. La postura mayoritaria entre quienes opinan es la condena a Putin y a la invasión, no la adhesión a la causa ucraniana.</li>
-      <li><strong>El bloque prorruso no es marginal.</strong> Sumando los tweets a favor de Rusia y en contra de Ucrania se llega a 3 685, frente a 3 991 del bloque contrario. Entre los tweets con postura, el 48 % se alinea con Rusia y el 52 % con Ucrania.</li>
-    </ul>
-
-    <p><strong>Usuarios por categoría.</strong> Al mirar quién publica en cada categoría aparecen patrones que la distribución agregada esconde.</p>
-
-    <figure>
-      <img src="img/usuarios-neutral.png" alt="Usuarios con más tweets neutrales; los primeros son gestionpe, rppnoticiasperu, litrillostf, revolucion_web y elcomercio_peru" loading="lazy">
-      <figcaption>Usuarios con más tweets etiquetados como neutrales (18 324 en total). Los medios de comunicación ocupan las primeras posiciones.</figcaption>
-    </figure>
-
-    <p>Los medios (Gestión, RPP, El Comercio, La República, Exitosa, Andina) concentran sus publicaciones en la categoría neutral, lo que confirma que informaron sin tomar partido explícito, al menos según el modelo.</p>
-
-    <div class="two">
-      <figure>
-        <img src="img/usuarios-pro-rusia.png" alt="Usuarios con más tweets a favor de Rusia; renzito1970 encabeza con cerca de 100" loading="lazy">
-        <figcaption>Usuarios con más tweets a favor de Rusia (2 088 en total).</figcaption>
-      </figure>
-      <figure>
-        <img src="img/usuarios-contra-ucrania.png" alt="Usuarios con más tweets en contra de Ucrania; renzito1970 encabeza con cerca de 175" loading="lazy">
-        <figcaption>Usuarios con más tweets en contra de Ucrania (1 597 en total).</figcaption>
-      </figure>
-    </div>
-
-    <p>La cuenta <code>renzito1970</code> encabeza de lejos ambas categorías del bloque prorruso: cerca de 100 tweets a favor de Rusia y unos 175 en contra de Ucrania, casi cuatro veces más que la siguiente cuenta en cada lista. Es la segunda cuenta más activa de todo el dataset y alrededor del 60 % de sus publicaciones caen en ese bloque. Le siguen <code>dogdega</code>, <code>isacb2021</code>, <code>bejarludwing</code> y <code>revolucion_web</code>, con volúmenes mucho menores.</p>
-
-    <div class="two">
-      <figure>
-        <img src="img/usuarios-contra-rusia.png" alt="Usuarios con más tweets en contra de Rusia; cristhian__s, giovanna_527 y monologuistax encabezan" loading="lazy">
-        <figcaption>Usuarios con más tweets en contra de Rusia (3 376 en total).</figcaption>
-      </figure>
-      <figure>
-        <img src="img/usuarios-pro-ucrania.png" alt="Usuarios con más tweets a favor de Ucrania; rafaeltorrescr4 encabeza con cerca de 140" loading="lazy">
-        <figcaption>Usuarios con más tweets a favor de Ucrania (615 en total).</figcaption>
-      </figure>
-    </div>
-
-    <p>En el bloque contrario el reparto es más parejo en la categoría contra Rusia, donde <code>cristhian__s</code>, <code>giovanna_527</code> y <code>monologuistax</code> superan los 90 tweets cada uno. La categoría a favor de Ucrania, en cambio, depende de una sola cuenta: <code>rafaeltorrescr4</code> aporta cerca de 140 de los 615 tweets, casi una cuarta parte, y ninguna otra cuenta pasa de diez.</p>
-
-    <p>Un detalle que conviene señalar: varias cuentas aparecen entre las más activas de categorías opuestas. <code>davidgr1714</code>, <code>monologuistax</code>, <code>bejarludwing</code> y <code>cristhian__s</code> figuran tanto en la lista contra Rusia como en la lista a favor de Rusia. Puede tratarse de usuarios que matizan su posición, pero es más plausible que refleje una debilidad del modelo: como parte de un modelo de sentimiento, detecta bien la negatividad, pero le cuesta más identificar contra quién va dirigida.</p>
-
-    <p><strong>Usuarios únicos por categoría.</strong> Contando cuentas distintas en lugar de tweets, la imagen se mantiene: alrededor de 4 900 cuentas publicaron al menos un tweet neutral, unas 1 400 al menos uno contra Rusia, unas 1 050 al menos uno a favor de Rusia, unas 750 al menos uno contra Ucrania y solo unas 330 al menos uno a favor de Ucrania.</p>
-
-    <figure>
-      <img src="img/usuarios-unicos-por-categoria.png" alt="Barras de usuarios únicos por categoría" width="480" loading="lazy">
-      <figcaption>Cuentas distintas con al menos un tweet en cada categoría.</figcaption>
-    </figure>
-
-    <h2 id="conclusiones">3. Conclusiones</h2>
-
-    <ul>
-      <li>Los usuarios peruanos en Twitter, en general, muestran una posición neutral respecto al tema de la guerra.</li>
-      <li>Los noticieros peruanos muestran una posición neutral en la mayoría de sus publicaciones.</li>
-      <li>Las opiniones respecto a la guerra son mayormente de rechazo a Rusia más que de apoyo a Ucrania.</li>
-      <li>Existe una cantidad considerable de publicaciones a favor de Rusia y en contra de Ucrania.</li>
-      <li>Existen cuentas con claros sesgos al realizar varias publicaciones. Con la versión actual del modelo no se puede determinar si existe propaganda política.</li>
-      <li>El modelo obtenido muestra buenos resultados a pesar de haber sido entrenado con un conjunto de datos reducido. Se puede entrenar el modelo con más datos para lograr un mejor desempeño.</li>
-    </ul>
-
-    <h2 id="limitaciones">4. Limitaciones y trabajo futuro</h2>
-
-    <ul>
-      <li><strong>La muestra no es la población.</strong> El operador <code>geocode</code> solo alcanza a usuarios que geoetiquetan sus tweets o declaran una ubicación en su perfil. Los usuarios peruanos sin ubicación quedan fuera, y los círculos de búsqueda dejan zonas sin cubrir.</li>
-      <li><strong>Solo tweets originales.</strong> Los <em>scrapers</em> no devuelven las respuestas, donde suele concentrarse la discusión más polarizada. El script de limpieza contabiliza cuántas respuestas se perdieron, pero no las recupera.</li>
-      <li><strong>Filtrado por subcadena.</strong> El filtro de términos centrales busca coincidencias de subcadena, de modo que términos cortos como «USA» coinciden también con «usar» o «acusa» e introducen algo de ruido.</li>
-      <li><strong>Conjunto etiquetado pequeño y desbalanceado.</strong> La categoría a favor de Ucrania es rara en el dataset y por tanto también en las etiquetas, lo que explica en parte su dependencia de una sola cuenta. Ampliar el etiquetado, sobre todo en las clases minoritarias, es la mejora más directa.</li>
-      <li><strong>Objetivo de la postura.</strong> Los cruces de cuentas entre categorías opuestas sugieren que el modelo confunde a veces contra quién va dirigida una crítica. Un esquema de etiquetado que separe polaridad y objetivo, o un modelo de <em>stance detection</em> en lugar de uno de sentimiento como base, atacaría el problema de raíz.</li>
-      <li><strong>Propaganda.</strong> Detectar propaganda coordinada exige mirar más allá del texto: fecha de creación de las cuentas, cadencia de publicación, redes de retuits y repetición de contenido entre cuentas. El proyecto identificó cuentas con sesgo marcado, pero no tuvo elementos para afirmar que respondieran a una campaña.</li>
-    </ul>
-
-    <p class="note"><strong>Nota de 2026.</strong> Este trabajo se realizó en 2022, cuando Twint y snscrape todavía podían consultar la búsqueda pública de Twitter. Tras los cambios de la plataforma en 2023 ambas herramientas dejaron de funcionar contra X, por lo que el pipeline de recolección no puede reejecutarse tal cual hoy. El resto del pipeline, desde la limpieza hasta el entrenamiento, sigue siendo aplicable a cualquier colección de textos.</p>
-
-    <h2 id="referencias">5. Referencias</h2>
-
-    <ul class="refs">
-      <li>Dave, R. (2020, 4 de diciembre). <em>Industrial Classification of Websites by Machine Learning with hands-on Python</em>. Medium. <a href="https://towardsdatascience.com/industrial-classification-of-websites-by-machine-learning-with-hands-on-python-3761b1b530f1">https://towardsdatascience.com/industrial-classification-of-websites-by-machine-learning-with-hands-on-python-3761b1b530f1</a></li>
-      <li>Lynn, S. (2021, 1 de septiembre). <em>Intro to Word Embeddings and Vectors for Text Analysis</em>. <a href="https://www.shanelynn.ie/get-busy-with-word-embeddings-introduction/">https://www.shanelynn.ie/get-busy-with-word-embeddings-introduction/</a></li>
-      <li>Hugging Face. <em>Text classification</em>. <a href="https://huggingface.co/docs/transformers/tasks/sequence_classification">https://huggingface.co/docs/transformers/tasks/sequence_classification</a></li>
-      <li><em>Fine-tuning pretrained NLP models with Huggingface's Trainer</em>. Medium. <a href="https://towardsdatascience.com/fine-tuning-pretrained-nlp-models-with-huggingfaces-trainer-6326a4456e7b">https://towardsdatascience.com/fine-tuning-pretrained-nlp-models-with-huggingfaces-trainer-6326a4456e7b</a></li>
-      <li>Pérez, J. M., Giudici, J. C. y Luque, F. <em>pysentimiento</em> y el modelo <code>finiteautomata/beto-sentiment-analysis</code>. <a href="https://huggingface.co/finiteautomata/beto-sentiment-analysis">https://huggingface.co/finiteautomata/beto-sentiment-analysis</a></li>
-      <li>Twint: <a href="https://github.com/twintproject/twint">github.com/twintproject/twint</a>. snscrape: <a href="https://github.com/JustAnotherArchivist/snscrape">github.com/JustAnotherArchivist/snscrape</a>.</li>
-    </ul>
   </article>
+
+  <footer>
+    <div class="inner">
+      <a href="/">← mgonnav</a>
+      <span>Mateo Gonzales Navarrete · 2026</span>
+    </div>
+  </footer>
 </body>
 </html>
