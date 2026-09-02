@@ -1,26 +1,373 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>War, polarization and Twitter in Peru</title>
-  <meta name="description" content="">
+  <title>Análisis y clasificación de tweets de usuarios peruanos sobre la guerra entre Rusia y Ucrania</title>
+  <meta name="description" content="Recolección, exploración, etiquetado y clasificación de 26 000 tweets de usuarios peruanos sobre la invasión rusa de Ucrania (2022), con un modelo BETO ajustado a cinco posturas.">
+  <meta property="og:title" content="Análisis y clasificación de tweets de usuarios peruanos sobre la guerra entre Rusia y Ucrania">
+  <meta property="og:description" content="Recolección, exploración, etiquetado y clasificación de 26 000 tweets de usuarios peruanos sobre la invasión rusa de Ucrania (2022).">
+  <meta property="og:type" content="article">
   <style>
-    body { max-width: 42rem; margin: 4rem auto; padding: 0 1.25rem; font: 18px/1.6 Georgia, "Times New Roman", serif; color: #222; }
+    body { max-width: 44rem; margin: 3rem auto; padding: 0 1.25rem; font: 18px/1.65 Georgia, "Times New Roman", serif; color: #222; background: #fff; }
     a { color: #0645ad; }
-    h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 0.25rem; }
-    .meta { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
-    img { max-width: 100%; }
     nav { margin-bottom: 2rem; font-size: 0.9rem; }
+    h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 0.75rem; }
+    h2 { font-size: 1.45rem; margin-top: 3rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+    h3 { font-size: 1.15rem; margin-top: 2rem; }
+    .meta { color: #666; font-size: 0.9rem; margin: 0 0 1.5rem; }
+    .course { background: #f7f4ee; border-left: 4px solid #8b3a3a; padding: 0.75rem 1rem; margin: 1.5rem 0; font-size: 0.95rem; }
+    .course p { margin: 0.15rem 0; }
+    .toc { font-size: 0.95rem; background: #fafafa; border: 1px solid #e5e5e5; padding: 0.75rem 1.25rem; }
+    .toc ol { margin: 0.25rem 0; padding-left: 1.25rem; }
+    figure { margin: 2rem 0; }
+    figure img { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+    figcaption { font-size: 0.85rem; color: #666; text-align: center; margin-top: 0.5rem; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+    @media (max-width: 640px) { .two { grid-template-columns: 1fr; } body { font-size: 17px; } }
+    table { border-collapse: collapse; width: 100%; font-size: 0.92rem; margin: 1.25rem 0; }
+    th, td { border-bottom: 1px solid #ddd; padding: 0.4rem 0.6rem; text-align: left; vertical-align: top; }
+    th { background: #f4f4f4; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    pre { background: #f4f4f4; padding: 0.9rem 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.45; }
+    code { font-family: Menlo, Consolas, monospace; font-size: 0.9em; }
+    blockquote { margin: 1rem 0; padding: 0.25rem 1rem; border-left: 3px solid #ccc; color: #444; font-style: italic; }
+    .note { background: #fff8e1; border: 1px solid #f0e0a0; padding: 0.75rem 1rem; font-size: 0.92rem; }
+    ul, ol { padding-left: 1.4rem; }
+    li { margin: 0.25rem 0; }
+    .refs li { font-size: 0.9rem; margin: 0.5rem 0; word-break: break-word; }
   </style>
 </head>
 <body>
   <nav><a href="/">← mgonnav</a></nav>
-  <article>
-    <h1>War, polarization and Twitter in Peru</h1>
-    <p class="meta"><time datetime="2026-09-02">September 2, 2026</time></p>
 
-    <p>Post content goes here.</p>
+  <article>
+    <header>
+      <h1>Análisis y clasificación de tweets de usuarios peruanos sobre su posición respecto a la guerra entre Rusia y Ucrania</h1>
+      <p class="meta">Mateo Gonzales Navarrete · Universidad Católica San Pablo<br>
+        Publicado el <time datetime="2026-09-02">2 de septiembre de 2026</time>. Trabajo realizado durante el semestre 2022-1.</p>
+
+      <div class="course">
+        <p><strong>Curso:</strong> Introducción a Ciencia de Datos (CS351)</p>
+        <p><strong>Profesor:</strong> Dr. Erick Gomez Nieto</p>
+        <p><strong>Semestre:</strong> 2022–1</p>
+      </div>
+    </header>
+
+    <p>El 24 de febrero de 2022 Rusia inició la invasión a gran escala de Ucrania. En las semanas siguientes la guerra ocupó buena parte de la conversación pública incluso en países alejados del conflicto. En el Perú tuvo además una dimensión local: el alza de combustibles y fertilizantes se atribuyó en gran medida a la guerra y terminó alimentando protestas en abril de ese año. Este proyecto, desarrollado como trabajo final del curso, se propuso medir cómo se posicionaron los usuarios peruanos de Twitter frente al conflicto: recolectar sus publicaciones, explorarlas, etiquetar a mano una muestra y entrenar un clasificador capaz de asignar a cada tweet un bando.</p>
+
+    <p>Este artículo recorre el pipeline completo, desde la recolección de datos hasta la aplicación del modelo sobre 26 000 tweets, y resume los hallazgos.</p>
+
+    <div class="toc">
+      <strong>Contenido</strong>
+      <ol>
+        <li><a href="#objetivos">Objetivos</a></li>
+        <li><a href="#pipeline">Pipeline aplicado</a>
+          <ol>
+            <li><a href="#recoleccion">Recolección de datos</a></li>
+            <li><a href="#limpieza">Regularización y limpieza</a></li>
+            <li><a href="#exploratorio">Análisis exploratorio</a></li>
+            <li><a href="#etiquetado">Etiquetado de datos</a></li>
+            <li><a href="#entrenamiento">Entrenamiento del modelo</a></li>
+            <li><a href="#analisis">Análisis del dataset con el modelo</a></li>
+          </ol>
+        </li>
+        <li><a href="#conclusiones">Conclusiones</a></li>
+        <li><a href="#limitaciones">Limitaciones y trabajo futuro</a></li>
+        <li><a href="#referencias">Referencias</a></li>
+      </ol>
+    </div>
+
+    <h2 id="objetivos">1. Objetivos</h2>
+
+    <p><strong>Objetivos principales</strong></p>
+    <ul>
+      <li>Conocer la opinión peruana sobre la invasión rusa en Ucrania.</li>
+      <li>Generar un modelo clasificador que permita determinar a qué bando apoya un tweet.</li>
+    </ul>
+
+    <p><strong>Objetivos secundarios</strong></p>
+    <ul>
+      <li>Conocer las cuentas más activas respecto a este tema.</li>
+      <li>Conocer la variación del interés respecto al tiempo.</li>
+      <li>Averiguar si existe propaganda por alguna parte beligerante.</li>
+    </ul>
+
+    <h2 id="pipeline">2. Pipeline aplicado</h2>
+
+    <p>El trabajo se organizó en cinco etapas: recolección de datos, regularización y limpieza, análisis exploratorio, etiquetado y entrenamiento de un modelo. Las dos últimas se alimentaron mutuamente: lo que se aprendía al entrenar y aplicar el modelo obligaba a volver a la exploración, revisar etiquetas y repetir.</p>
+
+    <h3 id="recoleccion">2.1 Recolección de datos</h3>
+
+    <p>Twitter no ofrecía en 2022 una forma sencilla de descargar tweets históricos filtrados por ubicación sin pasar por su API de pago, así que se usaron dos herramientas de <em>scraping</em> que consultan la búsqueda pública sin credenciales:</p>
+
+    <ul>
+      <li><strong>Twint</strong>, una herramienta de <em>scraping</em> de Twitter y OSINT escrita en Python.</li>
+      <li><strong>snscrape</strong>, un <em>scraper</em> genérico para servicios de redes sociales (SNS, <em>social networking services</em>).</li>
+    </ul>
+
+    <p>Se empezó con Twint y se incorporó snscrape cuando la primera se volvió inestable. Ambas herramientas devuelven cada tweet como una línea JSON con su identificador, fecha, usuario, texto, idioma, conteo de respuestas y hashtags. Las búsquedas se construyeron combinando tres dimensiones: palabras clave, ubicación geográfica y ventana de tiempo.</p>
+
+    <p><strong>Palabras clave.</strong> Twint consultó 23 términos en español e inglés. snscrape, incorporado después, usó una lista más acotada de 14 términos que excluía los más genéricos.</p>
+
+    <table>
+      <tr><th>Herramienta</th><th>Términos de búsqueda</th></tr>
+      <tr><td>Twint (23)</td><td>guerra, war, invasion, Ucrania, Ukraine, Rusia, Russia, Rusia vs Ucrania, Ucrania vs Rusia, Russia vs Ukraine, Ukraine vs Russia, Estados Unidos, United States, USA, Donbas, Donbass, Crimea, Putin, Zelenskyy, propaganda, intromision, Kiev, Kyiv</td></tr>
+      <tr><td>snscrape (14)</td><td>Ucrania, Ukraine, Rusia, Russia, Rusia vs Ucrania, Ucrania vs Rusia, Russia vs Ukraine, Ukraine vs Russia, Donbas, Donbass, Crimea, Zelenskyy, Kiev, Kyiv</td></tr>
+    </table>
+
+    <p><strong>Ubicación geográfica.</strong> Para restringir la búsqueda a usuarios peruanos se usó el operador <code>geocode:latitud,longitud,radio</code> de la búsqueda de Twitter, que devuelve tweets de usuarios ubicados dentro de un círculo. Se definió un círculo por cada una de las 24 capitales de departamento, con un radio ajustado al tamaño del departamento: desde 22 km para Tumbes y 33 km para Tacna hasta 180 km para Lima y 220 km para Cusco. Los círculos cubren buena parte del territorio poblado, aunque se solapan entre sí y dejan zonas de la Amazonía sin cubrir.</p>
+
+    <figure>
+      <img src="img/mapa-recoleccion.png" alt="Mapa del Perú con los 24 círculos de búsqueda geográfica centrados en las capitales de departamento" width="420">
+      <figcaption>Los 24 círculos de búsqueda, uno por capital de departamento. El operador <code>geocode</code> toma la ubicación del geoetiquetado del tweet o, en su defecto, de la ubicación declarada en el perfil del usuario.</figcaption>
+    </figure>
+
+    <p><strong>Ventanas de tiempo.</strong> Twint recorrió el periodo desde el 26 de febrero de 2022 en ventanas de dos días, con un límite de 1 000 tweets por consulta. snscrape recorrió ventanas de un día desde el 24 de enero hasta el 3 de mayo de 2022, es decir, con un mes de conversación previa a la invasión como línea base, y una segunda corrida cubrió del 1 al 24 de mayo. Cada corrida iteró sobre todas las combinaciones de término y ciudad: 552 consultas por ventana en Twint y 336 por día en snscrape, lanzadas como procesos en segundo plano en lotes de diez.</p>
+
+    <pre><code>snscrape --jsonl --progress --since 2022-05-01 \
+  twitter-search "Ucrania geocode:-12.04318,-77.02824,180km until:2022-05-24" \
+  &gt; snscrape_data/Ucrania_-12.04318,-77.02824,180km.json</code></pre>
+
+    <p>La configuración de Twint fue equivalente: salida en JSON, hashtags incluidos y las propiedades <code>Since</code>, <code>Until</code>, <code>Geo</code> y <code>Search</code> reasignadas en cada iteración del bucle sobre ventanas, ciudades y términos.</p>
+
+    <h3 id="limpieza">2.2 Regularización y limpieza de datos</h3>
+
+    <p><strong>Regularización.</strong> Twint y snscrape nombran y estructuran los campos de forma distinta, así que el primer paso fue transformar la salida de ambas a un formato común.</p>
+
+    <p><strong>Eliminación de duplicados.</strong> Por la forma de búsqueda los duplicados eran inevitables: un tweet que menciona «Rusia» y «Ucrania» aparece en ambas consultas, los círculos geográficos solapados devuelven el mismo tweet desde varias ciudades, y las ventanas de Twint y snscrape se superponen. Se deduplicó por el identificador del tweet.</p>
+
+    <p><strong>Filtrado por términos centrales.</strong> Se conservaron solo los tweets que contenían al menos uno de 18 términos centrales, descartando los que solo coincidían con palabras genéricas como «guerra», «invasión» o «propaganda». Así se evitó que una «guerra de precios» o una discusión sobre propaganda electoral entraran al dataset. Se contabilizó además cuántos tweets tenían respuestas y cuántas respuestas quedaron fuera, ya que los <em>scrapers</em> devuelven el tweet original pero no el hilo. Los tweets se separaron por idioma y el análisis se concentró en los publicados en español.</p>
+
+    <p><strong>Limpieza y lematización.</strong> Para el análisis exploratorio, el texto pasó por tres pasos:</p>
+    <ol>
+      <li>Remoción de puntuación, <em>stopwords</em>, URLs y tokens no alfabéticos.</li>
+      <li>Conversión a minúsculas.</li>
+      <li>Lematización, de modo que «rusos», «rusa» y «ruso» cuenten como una sola palabra, y los verbos se reduzcan a su infinitivo.</li>
+    </ol>
+    <p>Esta versión limpia alimentó las nubes de palabras, las frecuencias, los <em>skip-grams</em> y las proyecciones. El clasificador, en cambio, recibió el texto original, con puntuación, mayúsculas y emojis, porque el modelo base maneja su propia tokenización.</p>
+
+    <h3 id="exploratorio">2.3 Análisis exploratorio</h3>
+
+    <p><strong>Tweets respecto al tiempo.</strong> El volumen diario muestra con claridad cuándo la guerra ocupó la conversación peruana. Antes del 24 de febrero la actividad es casi nula. El primer pico, de unos 540 tweets diarios, llega con la invasión y decae durante marzo. El pico más alto, cercano a 1 270 tweets en un día, ocurre en la primera semana de abril y coincide con la difusión de las imágenes de Bucha, con la suspensión de Rusia del Consejo de Derechos Humanos de la ONU y, en el plano local, con el paro de transportistas y el toque de queda del 5 de abril en Lima, motivados en parte por el alza de combustibles atribuida a la guerra. Siguen repuntes a inicios y mediados de mayo y a fines de junio. Los tramos en cero de la segunda quincena de abril y de fines de mayo a mediados de junio corresponden, probablemente, a periodos no cubiertos por las corridas de recolección más que a un silencio real.</p>
+
+    <figure>
+      <img src="img/tweets-por-tiempo.png" alt="Serie de tiempo de tweets por día entre enero y junio de 2022, con picos a fines de febrero, inicios de abril, mayo y fines de junio" loading="lazy">
+      <figcaption>Tweets por día. La invasión del 24 de febrero produce el primer pico; el más alto llega en la primera semana de abril.</figcaption>
+    </figure>
+
+    <p><strong>Usuarios más activos.</strong> Las cuentas con más publicaciones sobre el tema son, en su mayoría, medios de comunicación: Gestión, RPP, El Comercio, La República, Exitosa, Alerta Punto PE y agregadores como Feed Peruano. Entre ellas se cuelan cuentas personales muy activas, como <code>renzito1970</code>, la segunda con más tweets, o <code>dogdega</code> y <code>revolucion_web</code>. Volveremos sobre ellas al aplicar el modelo.</p>
+
+    <figure>
+      <img src="img/usuarios-mas-activos.png" alt="Curva de frecuencias de los 25 usuarios con más tweets sobre el tema" loading="lazy">
+      <figcaption>Los 25 usuarios con más tweets en el dataset. Las primeras posiciones las ocupan medios de comunicación y unas pocas cuentas personales.</figcaption>
+    </figure>
+
+    <p><strong>Vocabulario.</strong> La nube de palabras y la curva de frecuencias muestran que la conversación gira alrededor de Rusia más que de Ucrania: «ruso» aparece unas 3 000 veces, contra unas 1 400 de «ucraniano». Le siguen «país», «poder», «otan», «eeuu», «mundo», «invasión», «chino», «nazi», «perú», «conflicto», «arma» y «europa». La presencia destacada de OTAN, Estados Unidos y China sugiere que buena parte de los usuarios encuadró la guerra como una confrontación geopolítica entre bloques y no solo como un conflicto entre dos países, y la aparición de «nazi» entre las palabras frecuentes recoge el marco de «desnazificación» usado por la propaganda rusa, ya sea para repetirlo o para rebatirlo.</p>
+
+    <div class="two">
+      <figure>
+        <img src="img/wordcloud.png" alt="Nube de palabras dominada por ruso, país, ir, ucraniano, poder, otan, eeuu, mundo" loading="lazy">
+        <figcaption>Nube de palabras sobre el texto lematizado.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/frecuencia-palabras.png" alt="Gráfico de frecuencias de las 30 palabras más comunes" loading="lazy">
+        <figcaption>Frecuencia de las 30 palabras más comunes.</figcaption>
+      </figure>
+    </div>
+
+    <p><strong>Bolsa de palabras y TF-IDF.</strong> Se construyeron representaciones de bolsa de palabras (BoW) y TF-IDF, que sirvieron de base para las proyecciones posteriores. Las diez palabras más comunes del vocabulario resultante repiten la lectura anterior.</p>
+
+    <figure>
+      <img src="img/bow-top10.png" alt="Barras de las diez palabras más comunes: ruso, ir, país, poder, otan, eeuu, ucraniano, mundo, ser, invasión" width="640" loading="lazy">
+      <figcaption>Las diez palabras más comunes en la bolsa de palabras.</figcaption>
+    </figure>
+
+    <p><strong>Skip-grams.</strong> Los <em>skip-grams</em> permiten ver qué palabras aparecen juntas aunque no sean adyacentes. Los 2-skip-bigramas más frecuentes son «invasión ruso», «fuerza armado», «último hora», «unión europeo», «pedro castillo» y «derecho humanos». Los 2-skip-trigramas están dominados por «consejo derecho humanos» y sus variantes con «suspender», que corresponden a la votación del 7 de abril de 2022 en la que la Asamblea General de la ONU suspendió a Rusia del Consejo de Derechos Humanos. También aparece «último hora directo», la marca de los medios en sus noticias de última hora. Que «pedro castillo», presidente del Perú en ese momento, figure entre los bigramas más frecuentes confirma que la conversación local mezcló la guerra con la política interna.</p>
+
+    <div class="two">
+      <figure>
+        <img src="img/skipgram-bigramas.png" alt="Diez 2-skip-bigramas más frecuentes" loading="lazy">
+        <figcaption>2-skip-bigramas más frecuentes.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/skipgram-trigramas.png" alt="Diez 2-skip-trigramas más frecuentes" loading="lazy">
+        <figcaption>2-skip-trigramas más frecuentes.</figcaption>
+      </figure>
+    </div>
+
+    <p><strong>PCA y clustering.</strong> Se proyectó la representación TF-IDF a dos componentes principales, retirando antes las palabras clave de búsqueda para que la estructura no reflejara simplemente qué término había recuperado cada tweet. La proyección forma dos brazos y el <em>clustering</em> aplicado sobre ella separa grupos a lo largo de esos brazos, pero ninguno se corresponde con una postura identificable al inspeccionar los tweets de cada grupo.</p>
+
+    <figure>
+      <img src="img/pca-clustering.png" alt="Proyección PCA en dos componentes con seis grupos coloreados distribuidos en dos brazos" width="480" loading="lazy">
+      <figcaption>PCA en dos componentes tras retirar las palabras clave, con los grupos obtenidos por <em>clustering</em>.</figcaption>
+    </figure>
+
+    <p><strong>UMAP.</strong> La proyección UMAP tampoco ayudó: casi todos los tweets caen en una sola masa densa, con tres puntos aislados. Los métodos no supervisados no revelaron una estructura de opiniones aprovechable, lo que motivó pasar al etiquetado manual y a un modelo supervisado.</p>
+
+    <figure>
+      <img src="img/umap.png" alt="Proyección UMAP con una única masa densa de puntos y tres puntos aislados" width="560" loading="lazy">
+      <figcaption>Proyección UMAP del dataset.</figcaption>
+    </figure>
+
+    <h3 id="etiquetado">2.4 Etiquetado de datos</h3>
+
+    <p>Para entrenar un clasificador hacía falta un conjunto de tweets etiquetados a mano. La primera decisión fue qué escala usar. Una escala de tres posiciones, a favor de Rusia, neutral y a favor de Ucrania, resulta insuficiente: muchos tweets critican a Ucrania, a Zelensky o a la OTAN sin elogiar a Rusia, y muchos otros condenan a Putin sin tomar partido por Ucrania. Se definió entonces una escala de cinco posiciones, ordenada de un extremo al otro, y se conservó la de tres como alternativa para comparar.</p>
+
+    <table>
+      <tr><th>Etiqueta</th><th>Código</th><th>Nombre</th><th>Significado</th></tr>
+      <tr><td class="num">0</td><td>R+</td><td><code>pro_russia</code></td><td>A favor de Rusia</td></tr>
+      <tr><td class="num">1</td><td>U−</td><td><code>against_ukraine</code></td><td>En contra de Ucrania</td></tr>
+      <tr><td class="num">2</td><td>N</td><td><code>neutral</code></td><td>Neutral o informativo</td></tr>
+      <tr><td class="num">3</td><td>R−</td><td><code>against_russia</code></td><td>En contra de Rusia</td></tr>
+      <tr><td class="num">4</td><td>U+</td><td><code>pro_ukraine</code></td><td>A favor de Ucrania</td></tr>
+    </table>
+
+    <p>Un ejemplo de cada categoría, tomado del conjunto etiquetado:</p>
+
+    <table>
+      <tr><th>Etiqueta</th><th>Tweet</th></tr>
+      <tr><td>0 · pro_russia</td><td>«Protestas en Bulgaria contra el suministro de armas a Ucrania: “¡Nosotros, los búlgaros, no permitimos el suministro de equipo militar a Ucrania e insistimos en que Rusia rompa la espalda de los nazis estadounidenses-ucranianos de una vez por todas!”»</td></tr>
+      <tr><td>1 · against_ukraine</td><td>«Es inaceptable que la inteligencia sólo sea usada para destruir, boicotear la paz en el planeta, Putin ya ganó, Zelenski quedó como un estúpido bufón que fue utilizado para beneplácito de USA.»</td></tr>
+      <tr><td>2 · neutral</td><td>«Una serie de ataques intensos contra los objetos de los militantes de las Fuerzas Armadas de Ucrania en el asentamiento. Severodonetsk, Rubizhnoye, Lisichansk, Kremennaya, Gornoye, Popasnaya, etc.»</td></tr>
+      <tr><td>3 · against_russia</td><td>«Putin es un asesino y genocida.»</td></tr>
+      <tr><td>4 · pro_ukraine</td><td>«Dios salve a Ucrania»</td></tr>
+    </table>
+
+    <p>Nótese que el tercer ejemplo, un parte militar redactado desde el punto de vista ruso, se etiqueta como neutral: la categoría agrupa el contenido informativo aunque provenga de una de las partes. El etiquetado se hizo sobre un subconjunto reducido del dataset, lo que condicionó los resultados que siguen.</p>
+
+    <h3 id="entrenamiento">2.5 Entrenamiento del modelo</h3>
+
+    <p>Con el conjunto etiquetado se ajustó un modelo de clasificación de secuencias con la biblioteca <code>transformers</code> de Hugging Face. Como modelo base se eligió <code>finiteautomata/beto-sentiment-analysis</code>, una versión de BETO, el BERT entrenado en español, ya ajustada para análisis de sentimiento por el proyecto pysentimiento. Partir de un modelo que ya distingue polaridad en español acorta el entrenamiento y aprovecha un conjunto etiquetado pequeño. Se usó el tokenizador del propio modelo base y una partición de 80 % para entrenamiento y 20 % para evaluación.</p>
+
+    <pre><code>from transformers import AutoTokenizer
+
+base_model_name = "finiteautomata/beto-sentiment-analysis"
+training_set_percentage = 0.8
+
+model = base_model_name
+tokenizer = AutoTokenizer.from_pretrained(model)</code></pre>
+
+    <p>Se entrenaron dos variantes, una con tres etiquetas y otra con cinco, y se evaluaron con exactitud y F1 sobre la partición de prueba.</p>
+
+    <table>
+      <tr><th></th><th class="num">3 etiquetas</th><th class="num">5 etiquetas</th></tr>
+      <tr><td>Exactitud (<em>accuracy</em>)</td><td class="num">78,92 %</td><td class="num">73,78 %</td></tr>
+      <tr><td>F1</td><td class="num">79,04 %</td><td class="num">74,56 %</td></tr>
+    </table>
+
+    <p><strong>Elección del modelo.</strong> La variante de tres etiquetas obtiene unos cinco puntos más en ambas métricas, pero lo hace a costa de fusionar posturas distintas. Se eligió el modelo de cinco etiquetas: pierde algo de precisión, pero conserva la diferencia entre atacar a Ucrania y defender a Rusia, o entre condenar a Rusia y apoyar a Ucrania, que era justamente lo que se quería medir. Sobre los cinco ejemplos de la sección anterior el modelo elegido reproduce las etiquetas manuales.</p>
+
+    <h3 id="analisis">2.6 Análisis del dataset usando el modelo</h3>
+
+    <p>El modelo de cinco etiquetas se aplicó a los 26 000 tweets del dataset limpio. Esta es la distribución resultante.</p>
+
+    <table>
+      <tr><th>Categoría</th><th class="num">Tweets</th><th class="num">% del total</th><th class="num">% de los no neutrales</th></tr>
+      <tr><td>neutral</td><td class="num">18 324</td><td class="num">70,5 %</td><td class="num">—</td></tr>
+      <tr><td>against_russia</td><td class="num">3 376</td><td class="num">13,0 %</td><td class="num">44,0 %</td></tr>
+      <tr><td>pro_russia</td><td class="num">2 088</td><td class="num">8,0 %</td><td class="num">27,2 %</td></tr>
+      <tr><td>against_ukraine</td><td class="num">1 597</td><td class="num">6,1 %</td><td class="num">20,8 %</td></tr>
+      <tr><td>pro_ukraine</td><td class="num">615</td><td class="num">2,4 %</td><td class="num">8,0 %</td></tr>
+      <tr><td><strong>Total</strong></td><td class="num"><strong>26 000</strong></td><td class="num">100 %</td><td class="num">7 676 no neutrales</td></tr>
+    </table>
+
+    <div class="two">
+      <figure>
+        <img src="img/tweets-por-categoria.png" alt="Barras de tweets por categoría; neutral domina con más de 18 000" loading="lazy">
+        <figcaption>Tweets por categoría.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/tweets-por-categoria-sin-neutral.png" alt="Barras de tweets por categoría sin la categoría neutral" loading="lazy">
+        <figcaption>Las cuatro categorías con postura, sin la neutral.</figcaption>
+      </figure>
+    </div>
+
+    <p>Tres lecturas se desprenden de la tabla:</p>
+    <ul>
+      <li><strong>Siete de cada diez tweets son neutrales.</strong> La mayor parte de la conversación es informativa: noticias, partes de guerra, cifras. Esto es coherente con que los usuarios más activos sean medios de comunicación.</li>
+      <li><strong>Se rechaza a Rusia mucho más de lo que se apoya a Ucrania.</strong> Los tweets contra Rusia son más de cinco veces los tweets a favor de Ucrania. La postura mayoritaria entre quienes opinan es la condena a Putin y a la invasión, no la adhesión a la causa ucraniana.</li>
+      <li><strong>El bloque prorruso no es marginal.</strong> Sumando los tweets a favor de Rusia y en contra de Ucrania se llega a 3 685, frente a 3 991 del bloque contrario. Entre los tweets con postura, el 48 % se alinea con Rusia y el 52 % con Ucrania.</li>
+    </ul>
+
+    <p><strong>Usuarios por categoría.</strong> Al mirar quién publica en cada categoría aparecen patrones que la distribución agregada esconde.</p>
+
+    <figure>
+      <img src="img/usuarios-neutral.png" alt="Usuarios con más tweets neutrales; los primeros son gestionpe, rppnoticiasperu, litrillostf, revolucion_web y elcomercio_peru" loading="lazy">
+      <figcaption>Usuarios con más tweets etiquetados como neutrales (18 324 en total). Los medios de comunicación ocupan las primeras posiciones.</figcaption>
+    </figure>
+
+    <p>Los medios (Gestión, RPP, El Comercio, La República, Exitosa, Andina) concentran sus publicaciones en la categoría neutral, lo que confirma que informaron sin tomar partido explícito, al menos según el modelo.</p>
+
+    <div class="two">
+      <figure>
+        <img src="img/usuarios-pro-rusia.png" alt="Usuarios con más tweets a favor de Rusia; renzito1970 encabeza con cerca de 100" loading="lazy">
+        <figcaption>Usuarios con más tweets a favor de Rusia (2 088 en total).</figcaption>
+      </figure>
+      <figure>
+        <img src="img/usuarios-contra-ucrania.png" alt="Usuarios con más tweets en contra de Ucrania; renzito1970 encabeza con cerca de 175" loading="lazy">
+        <figcaption>Usuarios con más tweets en contra de Ucrania (1 597 en total).</figcaption>
+      </figure>
+    </div>
+
+    <p>La cuenta <code>renzito1970</code> encabeza de lejos ambas categorías del bloque prorruso: cerca de 100 tweets a favor de Rusia y unos 175 en contra de Ucrania, casi cuatro veces más que la siguiente cuenta en cada lista. Es la segunda cuenta más activa de todo el dataset y alrededor del 60 % de sus publicaciones caen en ese bloque. Le siguen <code>dogdega</code>, <code>isacb2021</code>, <code>bejarludwing</code> y <code>revolucion_web</code>, con volúmenes mucho menores.</p>
+
+    <div class="two">
+      <figure>
+        <img src="img/usuarios-contra-rusia.png" alt="Usuarios con más tweets en contra de Rusia; cristhian__s, giovanna_527 y monologuistax encabezan" loading="lazy">
+        <figcaption>Usuarios con más tweets en contra de Rusia (3 376 en total).</figcaption>
+      </figure>
+      <figure>
+        <img src="img/usuarios-pro-ucrania.png" alt="Usuarios con más tweets a favor de Ucrania; rafaeltorrescr4 encabeza con cerca de 140" loading="lazy">
+        <figcaption>Usuarios con más tweets a favor de Ucrania (615 en total).</figcaption>
+      </figure>
+    </div>
+
+    <p>En el bloque contrario el reparto es más parejo en la categoría contra Rusia, donde <code>cristhian__s</code>, <code>giovanna_527</code> y <code>monologuistax</code> superan los 90 tweets cada uno. La categoría a favor de Ucrania, en cambio, depende de una sola cuenta: <code>rafaeltorrescr4</code> aporta cerca de 140 de los 615 tweets, casi una cuarta parte, y ninguna otra cuenta pasa de diez.</p>
+
+    <p>Un detalle que conviene señalar: varias cuentas aparecen entre las más activas de categorías opuestas. <code>davidgr1714</code>, <code>monologuistax</code>, <code>bejarludwing</code> y <code>cristhian__s</code> figuran tanto en la lista contra Rusia como en la lista a favor de Rusia. Puede tratarse de usuarios que matizan su posición, pero es más plausible que refleje una debilidad del modelo: como parte de un modelo de sentimiento, detecta bien la negatividad, pero le cuesta más identificar contra quién va dirigida.</p>
+
+    <p><strong>Usuarios únicos por categoría.</strong> Contando cuentas distintas en lugar de tweets, la imagen se mantiene: alrededor de 4 900 cuentas publicaron al menos un tweet neutral, unas 1 400 al menos uno contra Rusia, unas 1 050 al menos uno a favor de Rusia, unas 750 al menos uno contra Ucrania y solo unas 330 al menos uno a favor de Ucrania.</p>
+
+    <figure>
+      <img src="img/usuarios-unicos-por-categoria.png" alt="Barras de usuarios únicos por categoría" width="480" loading="lazy">
+      <figcaption>Cuentas distintas con al menos un tweet en cada categoría.</figcaption>
+    </figure>
+
+    <h2 id="conclusiones">3. Conclusiones</h2>
+
+    <ul>
+      <li>Los usuarios peruanos en Twitter, en general, muestran una posición neutral respecto al tema de la guerra.</li>
+      <li>Los noticieros peruanos muestran una posición neutral en la mayoría de sus publicaciones.</li>
+      <li>Las opiniones respecto a la guerra son mayormente de rechazo a Rusia más que de apoyo a Ucrania.</li>
+      <li>Existe una cantidad considerable de publicaciones a favor de Rusia y en contra de Ucrania.</li>
+      <li>Existen cuentas con claros sesgos al realizar varias publicaciones. Con la versión actual del modelo no se puede determinar si existe propaganda política.</li>
+      <li>El modelo obtenido muestra buenos resultados a pesar de haber sido entrenado con un conjunto de datos reducido. Se puede entrenar el modelo con más datos para lograr un mejor desempeño.</li>
+    </ul>
+
+    <h2 id="limitaciones">4. Limitaciones y trabajo futuro</h2>
+
+    <ul>
+      <li><strong>La muestra no es la población.</strong> El operador <code>geocode</code> solo alcanza a usuarios que geoetiquetan sus tweets o declaran una ubicación en su perfil. Los usuarios peruanos sin ubicación quedan fuera, y los círculos de búsqueda dejan zonas sin cubrir.</li>
+      <li><strong>Solo tweets originales.</strong> Los <em>scrapers</em> no devuelven las respuestas, donde suele concentrarse la discusión más polarizada. El script de limpieza contabiliza cuántas respuestas se perdieron, pero no las recupera.</li>
+      <li><strong>Filtrado por subcadena.</strong> El filtro de términos centrales busca coincidencias de subcadena, de modo que términos cortos como «USA» coinciden también con «usar» o «acusa» e introducen algo de ruido.</li>
+      <li><strong>Conjunto etiquetado pequeño y desbalanceado.</strong> La categoría a favor de Ucrania es rara en el dataset y por tanto también en las etiquetas, lo que explica en parte su dependencia de una sola cuenta. Ampliar el etiquetado, sobre todo en las clases minoritarias, es la mejora más directa.</li>
+      <li><strong>Objetivo de la postura.</strong> Los cruces de cuentas entre categorías opuestas sugieren que el modelo confunde a veces contra quién va dirigida una crítica. Un esquema de etiquetado que separe polaridad y objetivo, o un modelo de <em>stance detection</em> en lugar de uno de sentimiento como base, atacaría el problema de raíz.</li>
+      <li><strong>Propaganda.</strong> Detectar propaganda coordinada exige mirar más allá del texto: fecha de creación de las cuentas, cadencia de publicación, redes de retuits y repetición de contenido entre cuentas. El proyecto identificó cuentas con sesgo marcado, pero no tuvo elementos para afirmar que respondieran a una campaña.</li>
+    </ul>
+
+    <p class="note"><strong>Nota de 2026.</strong> Este trabajo se realizó en 2022, cuando Twint y snscrape todavía podían consultar la búsqueda pública de Twitter. Tras los cambios de la plataforma en 2023 ambas herramientas dejaron de funcionar contra X, por lo que el pipeline de recolección no puede reejecutarse tal cual hoy. El resto del pipeline, desde la limpieza hasta el entrenamiento, sigue siendo aplicable a cualquier colección de textos.</p>
+
+    <h2 id="referencias">5. Referencias</h2>
+
+    <ul class="refs">
+      <li>Dave, R. (2020, 4 de diciembre). <em>Industrial Classification of Websites by Machine Learning with hands-on Python</em>. Medium. <a href="https://towardsdatascience.com/industrial-classification-of-websites-by-machine-learning-with-hands-on-python-3761b1b530f1">https://towardsdatascience.com/industrial-classification-of-websites-by-machine-learning-with-hands-on-python-3761b1b530f1</a></li>
+      <li>Lynn, S. (2021, 1 de septiembre). <em>Intro to Word Embeddings and Vectors for Text Analysis</em>. <a href="https://www.shanelynn.ie/get-busy-with-word-embeddings-introduction/">https://www.shanelynn.ie/get-busy-with-word-embeddings-introduction/</a></li>
+      <li>Hugging Face. <em>Text classification</em>. <a href="https://huggingface.co/docs/transformers/tasks/sequence_classification">https://huggingface.co/docs/transformers/tasks/sequence_classification</a></li>
+      <li><em>Fine-tuning pretrained NLP models with Huggingface's Trainer</em>. Medium. <a href="https://towardsdatascience.com/fine-tuning-pretrained-nlp-models-with-huggingfaces-trainer-6326a4456e7b">https://towardsdatascience.com/fine-tuning-pretrained-nlp-models-with-huggingfaces-trainer-6326a4456e7b</a></li>
+      <li>Pérez, J. M., Giudici, J. C. y Luque, F. <em>pysentimiento</em> y el modelo <code>finiteautomata/beto-sentiment-analysis</code>. <a href="https://huggingface.co/finiteautomata/beto-sentiment-analysis">https://huggingface.co/finiteautomata/beto-sentiment-analysis</a></li>
+      <li>Twint: <a href="https://github.com/twintproject/twint">github.com/twintproject/twint</a>. snscrape: <a href="https://github.com/JustAnotherArchivist/snscrape">github.com/JustAnotherArchivist/snscrape</a>.</li>
+    </ul>
   </article>
 </body>
 </html>
